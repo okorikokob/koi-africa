@@ -1,5 +1,5 @@
 import { Hero } from "@/components/home/Hero";
-import { FeaturedBrands } from "@/components/home/FeaturedBrands";
+// import { FeaturedBrands } from "@/components/home/FeaturedBrands";
 import { FeaturedProducts } from "@/components/home/FeaturedProducts";
 import { TrendingBanner } from "@/components/home/TrendingBanner";
 import { CategoryBanners } from "@/components/home/CategoryBanners";
@@ -14,7 +14,7 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col gap-16 md:gap-24">
       <Hero />
-      <FeaturedBrands />
+      {/* <FeaturedBrands /> */}
       <FeaturedProducts
         products={featuredProducts}
         heading="Featured products"

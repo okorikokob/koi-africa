@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp, Search, SlidersHorizontal, X } from "lucide-react";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
@@ -8,233 +8,172 @@ import type { Product } from "@/types";
 
 type Props = {
   initialProducts: Product[];
+  initialTotal: number;
+  categoryOptions: string[];
+  pageSize: number;
 };
 
-const PAGE_SIZE = 9;
-
-type FilterGroupKey = "category" | "brand" | "price" | "source";
-
-type FilterGroup = {
-  key: FilterGroupKey;
-  title: string;
-  options: Array<{ label: string; value: string }>;
-};
-
-const FILTER_GROUPS: FilterGroup[] = [
-  {
-    key: "category",
-    title: "Category",
-    options: [
-      { label: "Fashion", value: "fashion" },
-      { label: "Beauty", value: "beauty" },
-      { label: "Tech", value: "tech" },
-      { label: "Home", value: "home" },
-      { label: "Kids", value: "kids" },
-    ],
-  },
-  {
-    key: "brand",
-    title: "Brand",
-    options: [
-      { label: "Nike", value: "Nike" },
-      { label: "Zara", value: "Zara" },
-      { label: "Sephora", value: "Sephora" },
-      { label: "Apple", value: "Apple" },
-      { label: "Adidas", value: "Adidas" },
-      { label: "Mango", value: "Mango" },
-    ],
-  },
-  {
-    key: "price",
-    title: "Price",
-    options: [
-      { label: "$0–$50", value: "0-50" },
-      { label: "$50–$100", value: "50-100" },
-      { label: "$100–$250", value: "100-250" },
-      { label: "$250+", value: "250+" },
-    ],
-  },
-  {
-    key: "source",
-    title: "Source",
-    options: [
-      { label: "UK", value: "UK" },
-      { label: "US", value: "US" },
-    ],
-  },
-];
-
-function toggleSelection(value: string, selected: string[], setter: (value: string[]) => void) {
-  if (selected.includes(value)) {
-    setter(selected.filter((item) => item !== value));
-    return;
-  }
-
-  setter([...selected, value]);
+function toLabel(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function matchesPriceRange(product: Product, value: string) {
-  if (value === "0-50") {
-    return product.priceAmount <= 50;
-  }
-
-  if (value === "50-100") {
-    return product.priceAmount > 50 && product.priceAmount <= 100;
-  }
-
-  if (value === "100-250") {
-    return product.priceAmount > 100 && product.priceAmount <= 250;
-  }
-
-  if (value === "250+") {
-    return product.priceAmount > 250;
-  }
-
-  return true;
+async function fetchProductPage(
+  categories: string[],
+  page: number,
+  pageSize: number,
+): Promise<{ products: Product[]; total: number }> {
+  const params = new URLSearchParams();
+  categories.forEach((c) => params.append("category", c));
+  params.set("page", String(page));
+  params.set("pageSize", String(pageSize));
+  const res = await fetch(`/api/products/list?${params.toString()}`);
+  const json = (await res.json()) as { success: boolean; data: Product[]; total: number };
+  if (!json.success) return { products: [], total: 0 };
+  return { products: json.data, total: json.total };
 }
 
-export function ProductListingPage({ initialProducts }: Props) {
+export function ProductListingPage({ initialProducts, initialTotal, categoryOptions, pageSize }: Props) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [total, setTotal] = useState(initialTotal);
+  const [page, setPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [isFiltersVisible, setIsFiltersVisible] = useState(true);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(true);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  const isFirstRender = useRef(true);
+  // Every fetch (filter refetch, search, load-more, clear) claims the next id before
+  // awaiting. A response only gets applied if it's still the latest request in flight —
+  // this is what prevents a slow/stale response from clobbering newer state
+  // (e.g. a delayed "coat" search result overwriting a "coat shoes" search, or an
+  // in-flight search response landing after the user has already cleared the box).
+  const requestIdRef = useRef(0);
+
+  // Refetch page 1 from the DB whenever the category filter changes (search box is empty).
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (searchQuery.trim()) return;
+
+    const requestId = ++requestIdRef.current;
+    setIsFilterLoading(true);
+    fetchProductPage(selectedCategories, 1, pageSize).then((result) => {
+      if (requestId !== requestIdRef.current) return;
+      setProducts(result.products);
+      setTotal(result.total);
+      setPage(1);
+    }).finally(() => {
+      if (requestId === requestIdRef.current) setIsFilterLoading(false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategories]);
+
+  const handleLoadMore = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+    setIsLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const result = await fetchProductPage(selectedCategories, nextPage, pageSize);
+      if (requestId !== requestIdRef.current) return;
+      setProducts((current) => [...current, ...result.products]);
+      setTotal(result.total);
+      setPage(nextPage);
+    } finally {
+      if (requestId === requestIdRef.current) setIsLoadingMore(false);
+    }
+  }, [page, selectedCategories, pageSize]);
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (!query.trim()) {
-      setProducts(initialProducts);
+      // Clearing search returns to the current category-filtered DB listing.
+      const requestId = ++requestIdRef.current;
+      setIsFilterLoading(true);
+      fetchProductPage(selectedCategories, 1, pageSize).then((result) => {
+        if (requestId !== requestIdRef.current) return;
+        setProducts(result.products);
+        setTotal(result.total);
+        setPage(1);
+      }).finally(() => {
+        if (requestId === requestIdRef.current) setIsFilterLoading(false);
+      });
       return;
     }
 
     debounceRef.current = setTimeout(async () => {
+      const requestId = ++requestIdRef.current;
       setIsSearching(true);
       try {
         const res = await fetch(`/api/products/search?q=${encodeURIComponent(query.trim())}`);
         const json = await res.json() as { success: boolean; data: Product[] };
-        if (json.success) setProducts(json.data);
+        if (requestId !== requestIdRef.current) return;
+        if (json.success) {
+          setProducts(json.data);
+          setTotal(json.data.length);
+        }
       } catch {
         // keep current products on error
       } finally {
-        setIsSearching(false);
+        if (requestId === requestIdRef.current) setIsSearching(false);
       }
     }, 400);
-  }, [initialProducts]);
+  }, [selectedCategories, pageSize]);
 
-  const [isFiltersVisible, setIsFiltersVisible] = useState(true);
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  const [sortBy, setSortBy] = useState("featured");
-  const [openGroups, setOpenGroups] = useState<Record<FilterGroupKey, boolean>>({
-    category: true,
-    brand: true,
-    price: true,
-    source: true,
-  });
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [selectedPrices, setSelectedPrices] = useState<string[]>([]);
-  const [selectedSources, setSelectedSources] = useState<string[]>([]);
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-
-  const filteredProducts = useMemo(() => {
-    const filtered = products.filter((product) => {
-      const categoryMatch =
-        selectedCategories.length === 0 || selectedCategories.includes(product.category);
-      const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(product.brandName);
-      const priceMatch = selectedPrices.length === 0 || selectedPrices.some((value) => matchesPriceRange(product, value));
-      const sourceMatch = selectedSources.length === 0 || selectedSources.includes(product.source ?? "US");
-
-      return categoryMatch && brandMatch && priceMatch && sourceMatch;
-    });
-
-    const sorted = [...filtered];
-    switch (sortBy) {
-      case "price-low":
-        sorted.sort((a, b) => a.priceAmount - b.priceAmount);
-        break;
-      case "price-high":
-        sorted.sort((a, b) => b.priceAmount - a.priceAmount);
-        break;
-      case "newest":
-        sorted.sort((a, b) => Number(b.tag === "new") - Number(a.tag === "new"));
-        break;
-      default:
-        sorted.sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured));
-        break;
-    }
-
-    return sorted;
-  }, [products, selectedCategories, selectedBrands, selectedPrices, selectedSources, sortBy]);
-
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [selectedCategories, selectedBrands, selectedPrices, selectedSources, sortBy]);
-
-  const visibleProducts = filteredProducts.slice(0, visibleCount);
-  const hasMore = visibleCount < filteredProducts.length;
-
-  const toggleGroup = (key: FilterGroupKey) => {
-    setOpenGroups((current) => ({ ...current, [key]: !current[key] }));
+  const toggleCategory = (value: string) => {
+    setSelectedCategories((current) =>
+      current.includes(value) ? current.filter((v) => v !== value) : [...current, value],
+    );
   };
 
   const closeMobileFilters = () => {
     setIsMobileFiltersOpen(false);
   };
 
-  const renderFilterGroup = (group: FilterGroup, onSelect?: () => void) => {
-    const isOpen = openGroups[group.key];
-    const selectedValues =
-      group.key === "category"
-        ? selectedCategories
-        : group.key === "brand"
-          ? selectedBrands
-          : group.key === "price"
-            ? selectedPrices
-            : selectedSources;
+  const isSearchActive = searchQuery.trim().length > 0;
+  const hasMore = !isSearchActive && products.length < total;
+  const isBusy = isFilterLoading || isSearching;
 
-    const setter =
-      group.key === "category"
-        ? setSelectedCategories
-        : group.key === "brand"
-          ? setSelectedBrands
-          : group.key === "price"
-            ? setSelectedPrices
-            : setSelectedSources;
-
-    return (
-      <div key={group.key} className="border-t border-border py-5 first:border-t-0 first:pt-0">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between text-left"
-          onClick={() => toggleGroup(group.key)}
-        >
-          <span className="font-display text-sm font-semibold text-text-primary">
-            {group.title}
-          </span>
-          {isOpen ? <ChevronUp className="h-4 w-4 text-text-secondary" /> : <ChevronDown className="h-4 w-4 text-text-secondary" />}
-        </button>
-        {isOpen && (
-          <div className="mt-4 space-y-3">
-            {group.options.map((option) => (
-              <label key={option.value} className="flex cursor-pointer items-center gap-2 text-sm text-text-secondary transition-colors duration-150 hover:text-text-primary">
-                <input
-                  type="checkbox"
-                  checked={selectedValues.includes(option.value)}
-                  onChange={() => {
-                    toggleSelection(option.value, selectedValues, setter);
-                    onSelect?.();
-                  }}
-                  className="h-4 w-4 rounded border-border accent-primary"
-                />
-                <span>{option.label}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const renderCategoryGroup = (onSelect?: () => void) => (
+    <div className="border-t border-border py-5 first:border-t-0 first:pt-0">
+      <button
+        type="button"
+        className="flex w-full items-center justify-between text-left"
+        onClick={() => setIsCategoryOpen((v) => !v)}
+      >
+        <span className="font-display text-sm font-semibold text-text-primary">Category</span>
+        {isCategoryOpen ? <ChevronUp className="h-4 w-4 text-text-secondary" /> : <ChevronDown className="h-4 w-4 text-text-secondary" />}
+      </button>
+      {isCategoryOpen && (
+        <div className="mt-4 space-y-3">
+          {categoryOptions.map((value) => (
+            <label key={value} className="flex cursor-pointer items-center gap-2 text-sm text-text-secondary transition-colors duration-150 hover:text-text-primary">
+              <input
+                type="checkbox"
+                checked={selectedCategories.includes(value)}
+                onChange={() => {
+                  toggleCategory(value);
+                  onSelect?.();
+                }}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              <span>{toLabel(value)}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background px-4 py-10 md:px-8 lg:px-10 lg:py-14">
@@ -242,7 +181,7 @@ export function ProductListingPage({ initialProducts }: Props) {
         <div className="flex flex-col gap-4 pb-8 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="font-display text-3xl font-bold text-text-primary md:text-4xl">
-              All Products <span className="text-text-muted">({products.length})</span>
+              All Products <span className="text-text-muted">({total})</span>
             </h1>
           </div>
 
@@ -265,7 +204,7 @@ export function ProductListingPage({ initialProducts }: Props) {
                 <X className="h-4 w-4" />
               </button>
             )}
-            {isSearching && (
+            {isBusy && (
               <span className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary" />
             )}
           </div>
@@ -287,19 +226,6 @@ export function ProductListingPage({ initialProducts }: Props) {
               <SlidersHorizontal className="h-4 w-4" />
               {isFiltersVisible ? "Hide Filters" : "Show Filters"}
             </button>
-            <label className="flex items-center gap-2 font-sans text-sm text-text-secondary">
-              <span className="font-medium text-text-primary">Sort By</span>
-              <select
-                value={sortBy}
-                onChange={(event) => setSortBy(event.target.value)}
-                className="bg-transparent pr-1 font-medium text-text-primary outline-none"
-              >
-                <option value="featured">Featured</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="newest">Newest</option>
-              </select>
-            </label>
           </div>
         </div>
 
@@ -316,7 +242,7 @@ export function ProductListingPage({ initialProducts }: Props) {
                   className="shrink-0 overflow-hidden"
                 >
                   <div className="w-[220px] space-y-1">
-                    {FILTER_GROUPS.map((group) => renderFilterGroup(group))}
+                    {renderCategoryGroup()}
                   </div>
                 </motion.aside>
               )}
@@ -325,9 +251,9 @@ export function ProductListingPage({ initialProducts }: Props) {
 
           <div className="min-w-0 flex-1">
             <div className="mb-6 flex items-center justify-between text-sm text-text-secondary lg:hidden">
-              <span>{filteredProducts.length} products</span>
+              <span>{isSearchActive ? products.length : total} products</span>
             </div>
-            {filteredProducts.length === 0 ? (
+            {products.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-4 py-24 text-center">
                 <p className="font-display text-lg font-semibold text-text-primary">
                   No products found
@@ -337,29 +263,25 @@ export function ProductListingPage({ initialProducts }: Props) {
                 </p>
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelectedCategories([]);
-                    setSelectedBrands([]);
-                    setSelectedPrices([]);
-                    setSelectedSources([]);
-                  }}
+                  onClick={() => setSelectedCategories([])}
                   className="inline-flex items-center justify-center rounded-button border border-border bg-surface px-6 py-2.5 font-sans text-sm font-medium text-text-primary transition-colors duration-150 hover:border-primary hover:text-primary"
                 >
                   Clear all filters
                 </button>
               </div>
             ) : (
-              <ProductGrid products={visibleProducts} />
+              <ProductGrid products={products} />
             )}
 
-            {hasMore && filteredProducts.length > 0 && (
+            {hasMore && (
               <div className="mt-12 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
-                  className="inline-flex items-center justify-center rounded-button border border-border bg-surface px-8 py-3 font-display text-sm font-medium text-text-primary transition-colors duration-150 hover:border-primary hover:text-primary"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  className="inline-flex items-center justify-center rounded-button border border-border bg-surface px-8 py-3 font-display text-sm font-medium text-text-primary transition-colors duration-150 hover:border-primary hover:text-primary disabled:opacity-50"
                 >
-                  Load more
+                  {isLoadingMore ? "Loading…" : "Load more"}
                 </button>
               </div>
             )}
@@ -398,7 +320,7 @@ export function ProductListingPage({ initialProducts }: Props) {
                 </button>
               </div>
               <div className="flex-1 space-y-1 overflow-y-auto">
-                {FILTER_GROUPS.map((group) => renderFilterGroup(group, closeMobileFilters))}
+                {renderCategoryGroup(closeMobileFilters)}
               </div>
             </motion.div>
           </div>

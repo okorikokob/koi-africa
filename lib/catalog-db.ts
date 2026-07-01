@@ -55,14 +55,58 @@ export async function persistAndMapProducts(
   return products.map((p) => ({ ...p, id: idByExternal.get(p.id) ?? p.id }));
 }
 
-export async function getProducts(): Promise<Product[]> {
+export type ProductListResult = {
+  products: Product[];
+  total: number;
+};
+
+export type ProductListOptions = {
+  categories?: string[];
+  page?: number;
+  pageSize?: number;
+};
+
+// Paginated, optionally category-filtered product listing for /products.
+// Ordering and slicing happen in the DB — never load the whole catalog client-side.
+export async function getProducts({
+  categories = [],
+  page = 1,
+  pageSize = 24,
+}: ProductListOptions = {}): Promise<ProductListResult> {
+  const insforge = createInsforgeServer();
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  let query = insforge.database
+    .from("products")
+    .select("*", { count: "exact" })
+    .order("is_featured", { ascending: false })
+    .order("synced_at", { ascending: false })
+    .range(from, to);
+
+  if (categories.length > 0) {
+    query = query.in("category", categories);
+  }
+
+  const { data, error, count } = await query;
+  if (error || !data) return { products: [], total: 0 };
+  return { products: (data as ProductRow[]).map(rowToKoi), total: count ?? data.length };
+}
+
+// Distinct categories actually present in the catalog, for the filter sidebar.
+// Only fetches the `category` column — cheap even as the catalog grows.
+export async function getCategoryFacets(): Promise<string[]> {
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
-    .select("*")
-    .order("synced_at", { ascending: false });
+    .select("category");
   if (error || !data) return [];
-  return (data as ProductRow[]).map(rowToKoi);
+  const set = new Set(
+    (data as Array<{ category: string | null }>)
+      .map((r) => r.category)
+      .filter((c): c is string => Boolean(c)),
+  );
+  return Array.from(set).sort();
 }
 
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {

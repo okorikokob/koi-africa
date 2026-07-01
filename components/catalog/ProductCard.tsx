@@ -48,13 +48,19 @@ export function ProductCard({ product }: Props) {
             {badgeLabel(product.tag)}
           </span>
         )}
-        <Image
-          src={product.imageUrl}
-          alt={product.title}
-          fill
-          sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
-          className="object-cover transition-transform duration-250 group-hover:scale-[1.02]"
-        />
+        {product.imageUrl ? (
+          <Image
+            src={product.imageUrl}
+            alt={product.title}
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
+            className="object-cover transition-transform duration-250 group-hover:scale-[1.02]"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-surface-secondary text-xs text-text-muted">
+            No image
+          </div>
+        )}
       </div>
       <div className="space-y-1 p-4">
         <div className="flex items-start justify-between gap-3">
