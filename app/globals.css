@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* ---- Fonts ---- */
+  --font-display: "Satoshi", sans-serif;   /* headings, nav, buttons, emphasis */
+  --font-sans: "Inter", sans-serif;        /* body, forms, tables, long-form */
+
+  /* ---- Primary brand (KOI Blue) ---- */
+  --color-primary: #004aad;          /* primary actions, links, active states, focus rings */
+  --color-primary-hover: #003d8f;    /* hover + pressed */
+  --color-primary-soft: #eaf2ff;     /* selected states, soft info backgrounds, hover surfaces */
+  --color-primary-foreground: #ffffff;
+
+  /* ---- Neutral system ---- */
+  --color-background: #fffbf0;        /* page backgrounds, large surfaces */
+  --color-surface: #ffffff;           /* cards, inputs, modals, elevated UI */
+  --color-surface-secondary: #f8f8f6; /* grouped sections, sidebars, secondary containers */
+
+  /* ---- Borders ---- */
+  --color-border: #d8d8d2;            /* dividers, input borders, card outlines */
+
+  /* ---- Text ---- */
+  --color-text-primary: #121212;      /* headings, primary content */
+  --color-text-secondary: #676760;    /* supporting content, metadata, labels */
+  --color-text-muted: #8f8f88;        /* disabled, placeholder, inactive */
+
+  /* ---- Semantic ---- */
+  --color-success: #14ae5c;
+  --color-warning: #f5a524;
+  --color-error: #e5484d;
+  --color-info: #0091ff;
+
+  /* ---- Radius ---- */
+  --radius-button: 12px;   /* buttons + inputs */
+  --radius-card: 16px;     /* cards */
+  --radius-modal: 24px;    /* modals */
+  --radius-full: 9999px;   /* pills, tags */
+
+  /* ---- Shadows (soft, premium) ---- */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.12);
+
+  /* ---- Spacing (8pt system) ---- */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ---- Motion ---- */
+  --motion-hover: 150ms;
+  --motion-card: 250ms;
+  --motion-modal: 300ms;
+  --motion-page: 350ms;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.animate-marquee {
+  animation: marquee 30s linear infinite;
 }

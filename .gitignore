@@ -32,6 +32,10 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+.env.local
+
+# contains the InsForge admin API key in plaintext
+.mcp.json
 
 # vercel
 .vercel
