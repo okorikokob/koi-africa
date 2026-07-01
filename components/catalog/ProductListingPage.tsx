@@ -42,6 +42,14 @@ export function ProductListingPage({ initialProducts, initialTotal, categoryOpti
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Autofocus the search box when arriving via the navbar's search icon (?focus=search).
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("focus") === "search") {
+      searchInputRef.current?.focus();
+    }
+  }, []);
 
   const [isFiltersVisible, setIsFiltersVisible] = useState(true);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -188,6 +196,7 @@ export function ProductListingPage({ initialProducts, initialTotal, categoryOpti
           <div className="relative w-full max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
             <input
+              ref={searchInputRef}
               type="search"
               placeholder="Search products…"
               value={searchQuery}

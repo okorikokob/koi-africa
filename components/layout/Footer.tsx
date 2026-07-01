@@ -10,8 +10,7 @@ const COMPANY_LINKS = [
 
 const SHOP_LINKS = [
   { label: "Brands", href: "/brands" },
-  { label: "Categories", href: "/categories" },
-  { label: "Track Order", href: "/track" },
+  { label: "Categories", href: "/#categories" },
 ];
 
 const HELP_LINKS = [

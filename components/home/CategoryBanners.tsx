@@ -20,7 +20,7 @@ const BANNERS = [
 export function CategoryBanners() {
   return (
     <Reveal>
-      <section className="mx-auto max-w-[1280px] px-4 md:px-8">
+      <section id="categories" className="mx-auto max-w-[1280px] scroll-mt-20 px-4 md:px-8">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {BANNERS.map((banner) => (
             <div

@@ -94,11 +94,47 @@ export function Hero() {
     </div>
   );
 
+  const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
+    const SWIPE_THRESHOLD = 60;
+    if (info.offset.x < -SWIPE_THRESHOLD) goTo(index + 1);
+    else if (info.offset.x > SWIPE_THRESHOLD) goTo(index - 1);
+  };
+
   return (
     <Reveal>
       <section className="relative w-full overflow-hidden bg-background md:min-h-[90vh]">
-        {/* Mobile layout — stacked, no overlap, image hidden */}
-        <div className="flex flex-col gap-4 px-4 py-8 md:hidden">
+        {/* Mobile layout — image card up top, swipeable, copy below */}
+        <div className="flex flex-col gap-6 px-4 pb-10 pt-6 md:hidden">
+          <div className="relative mx-auto aspect-[1919/899] w-full max-w-md">
+            <div
+              aria-hidden="true"
+              className="absolute -inset-2 -rotate-2 rounded-modal bg-primary-soft"
+            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.97 }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={handleDragEnd}
+                className="absolute inset-0 touch-pan-y overflow-hidden rounded-modal"
+              >
+                <Image
+                  src={slide.image}
+                  alt={slide.headline.join(" ")}
+                  fill
+                  sizes="100vw"
+                  className="object-contain object-center drop-shadow-lg"
+                  priority={index === 0}
+                />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
           <AnimatePresence mode="wait">
             <motion.div
               key={index}
