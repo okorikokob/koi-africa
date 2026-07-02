@@ -410,14 +410,16 @@ export function ProductInfo({ product, onColorChange }: Props) {
                   )}
                 </div>
               </div>
-              <a
-                href={product.vendorUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-sans text-sm font-medium text-primary transition-colors duration-150 hover:underline"
-              >
-                See all reviews on vendor site →
-              </a>
+              {product.vendorUrl && (
+                <a
+                  href={product.vendorUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-sans text-sm font-medium text-primary transition-colors duration-150 hover:underline"
+                >
+                  See all reviews on vendor site →
+                </a>
+              )}
             </div>
           ) : (
             <p className="font-sans text-sm text-text-muted">No reviews yet.</p>
