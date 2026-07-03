@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { CartProvider } from "@/lib/cart-context";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -29,10 +31,16 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${satoshi.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-background font-sans text-text-primary">
-        <Navbar />
-        <main className="flex-1">{children}</main>
-        <Footer />
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col bg-background font-sans text-text-primary"
+      >
+        <CartProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <CartDrawer />
+        </CartProvider>
       </body>
     </html>
   );

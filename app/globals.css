@@ -30,6 +30,11 @@
   --color-error: #e5484d;
   --color-info: #0091ff;
 
+  /* ---- Cinematic accents (hero, footer, dark sections) ---- */
+  --color-ink: #0a0a0a;         /* footer + dark section backgrounds */
+  --color-accent-blue: #5ba3ff; /* outlined headline strokes, promo emphasis */
+  --color-accent-blue-light: #7bb8ff; /* live-badge text on dark backgrounds */
+
   /* ---- Radius ---- */
   --radius-button: 12px;   /* buttons + inputs */
   --radius-card: 16px;     /* cards */

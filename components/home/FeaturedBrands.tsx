@@ -1,65 +1,103 @@
 import Link from "next/link";
-import { Reveal } from "@/components/motion/Reveal";
+import Image from "next/image";
+import { ArrowRight } from "lucide-react";
+import type { Brand } from "@/types";
 
-const BRAND_NAMES = [
-  "Nike",
-  "Zara",
-  "Sephora",
-  "Apple",
-  "Adidas",
-  "Gucci",
-  "Louis Vuitton",
-  "H&M",
-  "Dyson",
-  "Fenty Beauty",
-  "Levi's",
-  "Mango",
-  "Charlotte Tilbury",
-  "New Balance",
-  "ASOS",
-  "The Ordinary",
-  "Puma",
-  "Hermès",
-  "Samsung",
-  "Uniqlo",
-];
+const BRAND_IMAGES: Record<string, string> = {
+  nike: "/shoes/shoe-7.avif",
+  zara: "/assets/hero-image.avif",
+  sephora: "/assets/makeup.jpg",
+  apple: "/assets/airpod.jpg",
+  adidas: "/shoes/shoe-11.avif",
+  mango: "/assets/skirt.jpg",
+  gucci: "/assets/bags.jpg",
+};
 
-function MarqueeRow({ durationSeconds }: { durationSeconds: number }) {
-  const brands = [...BRAND_NAMES, ...BRAND_NAMES];
+const BRAND_COUNTS: Record<string, string> = {
+  nike: "2,400+ products",
+  zara: "1,800+ products",
+  sephora: "3,200+ products",
+  apple: "320+ products",
+  adidas: "1,600+ products",
+  mango: "980+ products",
+  gucci: "890+ products",
+};
+
+type Props = {
+  brands: Brand[];
+};
+
+export function FeaturedBrands({ brands }: Props) {
+  const featured = brands.slice(0, 7);
 
   return (
-    <div className="relative flex overflow-hidden">
-      <div
-        className="flex w-max items-center gap-8 animate-marquee"
-        style={{ animationDuration: `${durationSeconds}s` }}
-      >
-        {brands.map((name, i) => (
-          <span
-            key={`${name}-${i}`}
-            className="flex items-center gap-8 whitespace-nowrap font-display text-lg font-medium text-text-secondary md:text-2xl"
-          >
-            {name}
-            <span className="h-1 w-1 rounded-full bg-border" aria-hidden="true" />
-          </span>
-        ))}
+    <section className=" max-w-[1680px] px-5 py-10 md:px-16 md:py-[72px]">
+      <div className="mb-6 flex items-start justify-between gap-3 md:mb-[38px] md:items-end">
+        <div>
+          <div className="mb-1.5 text-[10px] font-extrabold uppercase tracking-[2.5px] text-primary md:text-[11px] md:tracking-[3px]">
+            Top Brands
+          </div>
+          <div className="text-2xl font-black leading-[1.15] text-text-primary md:text-[38px] md:tracking-[-1px]">
+            Shop by Brand
+          </div>
+        </div>
+        <Link
+          href="/brands"
+          className="mt-1 flex-shrink-0 whitespace-nowrap font-sans text-[13px] font-bold text-primary hover:underline md:text-[15px]"
+        >
+          See all →
+        </Link>
       </div>
-    </div>
-  );
-}
 
-export function FeaturedBrands() {
-  return (
-    <section className="bg-background py-12 md:py-16">
-      <Reveal className="mx-auto flex max-w-[1280px] items-end justify-between gap-4 px-4 md:px-8">
-        <h2 className="font-display text-2xl font-semibold text-text-primary md:text-4xl">
-          Featured brands
-        </h2>
-        
-      </Reveal>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:grid-rows-2 md:gap-4">
+        {featured.map((brand, index) => {
+          const isFeatureCard = index === 0;
 
-      <div className="mt-10 flex flex-col gap-6">
-        <MarqueeRow durationSeconds={30} />
-        <MarqueeRow durationSeconds={34} />
+          return (
+            <Link
+              key={brand.id}
+              href={`/brands/${brand.slug}`}
+              className={`group relative overflow-hidden rounded-[18px] transition-transform duration-300 hover:-translate-y-1 md:rounded-2xl ${
+                isFeatureCard
+                  ? "col-span-2 aspect-[16/9] md:col-span-1 md:row-span-2 md:aspect-auto"
+                  : "aspect-[3/4]"
+              }`}
+            >
+              <Image
+                src={BRAND_IMAGES[brand.slug] ?? "/assets/hero-image.avif"}
+                alt={brand.name}
+                fill
+                sizes="(min-width: 768px) 25vw, 50vw"
+                className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0) 100%)",
+                }}
+              />
+              <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-5">
+                <span className="mb-1.5 inline-block w-fit rounded-full border border-white/20 bg-white/15 px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[1.5px] text-white/90 backdrop-blur-sm">
+                  {brand.category}
+                </span>
+                <span
+                  className={`mb-0.5 font-black leading-none text-white ${
+                    isFeatureCard ? "text-[26px] md:text-[32px]" : "text-[20px] md:text-[24px]"
+                  }`}
+                >
+                  {brand.name}
+                </span>
+                <span className="text-xs font-medium text-white/55">
+                  {BRAND_COUNTS[brand.slug] ?? "New arrivals"}
+                </span>
+              </div>
+              <span className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-surface/90 text-primary opacity-0 transition-all duration-150 group-hover:bg-primary group-hover:text-white group-hover:opacity-100">
+                <ArrowRight className="h-4 w-4" />
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

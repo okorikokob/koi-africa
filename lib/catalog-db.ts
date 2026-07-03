@@ -181,3 +181,26 @@ export async function getProductsByBrand(brandName: string): Promise<Product[]> 
   if (error || !data) return [];
   return (data as ProductRow[]).map(rowToKoi);
 }
+
+// Brand page catalog: DB rows (fast, already seeded) topped up with a live
+// Shopify search for the brand name so every brand shows real products even
+// before its catalog has been synced. New finds are persisted so their detail
+// pages resolve by DB id, same as hybrid product search.
+export async function getBrandCatalog(brandName: string, category: string): Promise<Product[]> {
+  const seeded = await getProductsByBrand(brandName);
+
+  let live: Product[] = [];
+  try {
+    const shopify = await searchShopifyProducts(brandName, 24);
+    live = shopify.map((p) => toKoiProduct(p, category));
+  } catch (error) {
+    console.error(`[catalog-db] live Shopify search failed for brand "${brandName}"`, error);
+  }
+
+  const persistedLive = live.length > 0 ? await persistAndMapProducts(live, category) : [];
+
+  const byId = new Map<string, Product>();
+  for (const product of seeded) byId.set(product.id, product);
+  for (const product of persistedLive) byId.set(product.id, product);
+  return Array.from(byId.values());
+}

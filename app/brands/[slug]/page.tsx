@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 import { FEATURED_BRANDS } from "@/lib/mock-data";
-import { getProductsByBrand } from "@/lib/catalog-db";
+import { getBrandCatalog } from "@/lib/catalog-db";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { Reveal } from "@/components/motion/Reveal";
 
@@ -17,7 +17,7 @@ export default async function BrandPage({ params }: Props) {
 
   if (!brand) notFound();
 
-  const products = await getProductsByBrand(brand.name);
+  const products = await getBrandCatalog(brand.name, brand.category);
 
   return (
     <div className="min-h-screen bg-background">

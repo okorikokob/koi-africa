@@ -59,6 +59,15 @@ export const FEATURED_BRANDS: Brand[] = [
     category: "fashion",
     isFeatured: true,
   },
+  {
+    id: "brand-gucci",
+    name: "Gucci",
+    slug: "gucci",
+    logoUrl: "https://api.dicebear.com/9.x/initials/svg?seed=Gucci&backgroundType=solid&backgroundColor=ffffff",
+    description: "Italian luxury fashion house.",
+    category: "luxury",
+    isFeatured: true,
+  },
 ];
 
 export const FEATURED_PRODUCTS: Product[] = [
