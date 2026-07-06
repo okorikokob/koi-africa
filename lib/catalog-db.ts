@@ -5,7 +5,7 @@ import { createInsforgeServer } from "@/lib/insforge-server";
 import { rowToKoi, koiToInsert, type ProductRow } from "@/lib/product-db";
 import { searchShopifyProducts } from "@/lib/shopify-catalog";
 import { toKoiProduct } from "@/lib/catalog-helpers";
-import type { Product } from "@/types";
+import type { Brand, Product } from "@/types";
 
 // Persist a batch of Shopify-sourced products (from live search) into the DB,
 // then return them with their `id` swapped to the DB row id so detail pages —
@@ -180,4 +180,59 @@ export async function getProductsByBrand(brandName: string): Promise<Product[]> 
     .ilike("brand_name", brandName);
   if (error || !data) return [];
   return (data as ProductRow[]).map(rowToKoi);
+}
+
+// Brand page catalog: DB rows (fast, already seeded) topped up with a live
+// Shopify search for the brand name so every brand shows real products even
+// before its catalog has been synced. New finds are persisted so their detail
+// pages resolve by DB id, same as hybrid product search.
+export async function getBrandCatalog(brandName: string, category: string): Promise<Product[]> {
+  const seeded = await getProductsByBrand(brandName);
+
+  let live: Product[] = [];
+  try {
+    const shopify = await searchShopifyProducts(brandName, 50); // 50 is the Shopify MCP's hard per-call cap
+    live = shopify.map((p) => toKoiProduct(p, category));
+  } catch (error) {
+    console.error(`[catalog-db] live Shopify search failed for brand "${brandName}"`, error);
+  }
+
+  const persistedLive = live.length > 0 ? await persistAndMapProducts(live, category) : [];
+
+  const byId = new Map<string, Product>();
+  for (const product of seeded) byId.set(product.id, product);
+  for (const product of persistedLive) byId.set(product.id, product);
+  return Array.from(byId.values());
+}
+
+export type BrandSummary = {
+  brand: Brand;
+  productCount: number;
+  imageUrl: string | null;
+};
+
+// All Brands grid: one card per curated brand, backed by its real product
+// catalog (same seeded + live-Shopify merge as getBrandCatalog) for the
+// card's product count and representative image.
+//
+// Batched (not one big Promise.all) — firing a live Shopify search per brand
+// all at once trips the MCP endpoint's rate limit (429) well before 10
+// requests land.
+export async function getBrandSummaries(brands: Brand[], batchSize = 3): Promise<BrandSummary[]> {
+  const results: BrandSummary[] = [];
+  for (let i = 0; i < brands.length; i += batchSize) {
+    const batch = brands.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map(async (brand) => {
+        const products = await getBrandCatalog(brand.name, brand.category);
+        return {
+          brand,
+          productCount: products.length,
+          imageUrl: products[0]?.imageUrl ?? null,
+        };
+      }),
+    );
+    results.push(...batchResults);
+  }
+  return results;
 }

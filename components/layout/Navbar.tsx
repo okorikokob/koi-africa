@@ -2,15 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, Search, X } from "lucide-react";
+import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import { useCart } from "@/lib/cart-context";
 
 const NAV_LINKS = [
+  { label: "Home", href: "/" },
   { label: "Brands", href: "/brands" },
-  { label: "Categories", href: "/#categories" },
+  { label: "How it works", href: "/#how-it-works" },
 ];
 
 export function Navbar() {
@@ -18,6 +20,7 @@ export function Navbar() {
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  const { count, openCart } = useCart();
 
   useEffect(() => {
     setIsMounted(true);
@@ -33,11 +36,11 @@ export function Navbar() {
     };
   }, [isMenuOpen]);
 
-  const isActive = (href: string) => href !== "/#categories" && pathname.startsWith(href);
+  const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const goToSearch = () => {
     setIsMenuOpen(false);
-    router.push("/products?focus=search");
+    router.push("/brands");
   };
 
   const mobileMenu = (
@@ -106,36 +109,46 @@ export function Navbar() {
   );
 
   return (
-    <header className="sticky top-0 z-50 h-16 w-full border-b border-border bg-surface/90 backdrop-blur-md">
-      <div className="mx-auto flex h-full max-w-[1280px] items-center justify-between px-4 md:px-8">
-        <Link href="/" className="flex items-center" aria-label="KOI home">
-          <Image src="/koi-logo.svg" alt="KOI" width={88} height={50} priority />
+    <header className="sticky top-0 z-50 h-[60px] w-full border-b border-border bg-background/96 backdrop-blur-xl md:h-[76px]">
+      <div className="mx-auto flex h-full max-w-[1680px] items-center justify-between px-5 md:px-8">
+        <Link href="/" className="relative h-8 w-[70px] shrink-0 md:h-9 md:w-[80px]" aria-label="KOI home">
+          <Image src="/koi-logo.svg" alt="KOI" fill className="object-contain object-left" priority />
         </Link>
 
-        <nav className="hidden items-center gap-10 md:flex">
+        <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-9 md:flex">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`font-display text-[13px] font-medium uppercase tracking-[0.08em] transition-colors duration-150 hover:text-primary ${
-                isActive(link.href) ? "text-primary" : "text-text-primary"
+              className={`group relative py-1 font-sans text-sm font-semibold transition-colors duration-150 ${
+                isActive(link.href) ? "text-text-primary" : "text-text-secondary hover:text-text-primary"
               }`}
             >
               {link.label}
+              <span className="absolute -bottom-0.5 left-0 right-full h-0.5 bg-primary transition-all duration-250 group-hover:right-0" />
             </Link>
           ))}
         </nav>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             aria-label="Search products"
             onClick={goToSearch}
-            className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-colors duration-150 hover:bg-surface-secondary hover:text-primary"
+            className="flex h-[38px] w-[38px] items-center justify-center rounded-full border-[1.5px] border-border bg-surface text-text-secondary transition-all duration-150 hover:border-primary hover:bg-primary-soft md:h-[42px] md:w-[42px]"
           >
-            <Search className="h-[18px] w-[18px]" strokeWidth={1.75} />
+            <Search className="h-4 w-4" strokeWidth={1.75} />
           </button>
-          <span className="mx-1 hidden h-5 w-px bg-border md:block" aria-hidden="true" />
+          <button
+            type="button"
+            onClick={openCart}
+            className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 font-sans text-[13px] font-bold text-primary-foreground transition-all duration-150 hover:scale-[1.03] hover:bg-primary-hover md:px-[22px] md:py-[11px] md:text-sm"
+          >
+            <ShoppingBag className="h-4 w-4" strokeWidth={2} />
+            <span className="min-w-[18px] rounded-full bg-surface px-[7px] py-px text-center text-[11px] font-extrabold text-primary">
+              {count}
+            </span>
+          </button>
           <button
             type="button"
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}

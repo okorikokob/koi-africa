@@ -1,241 +1,150 @@
-// components/home/Hero.tsx — REBUILT
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Reveal } from "@/components/motion/Reveal";
+import Link from "next/link";
+import { motion } from "framer-motion";
 
-type Slide = {
-  ghost: string;
-  headline: [string, string];
-  subtext: string;
-  ctaLabel: string;
-  ctaHref: string;
-  image: string;
-};
-
-const SLIDES: Slide[] = [
-  {
-    ghost: "GLOBAL",
-    headline: ["Your gateway to", "global shopping."],
-    subtext:
-      "Browse real products from hundreds of global brands, buy on their site, then let KOI deliver it home.",
-    ctaLabel: "Start Shopping",
-    ctaHref: "/products",
-    image: "/assets/Home-default.webp",
-  },
-  {
-    ghost: "STYLE",
-    headline: ["Style without", "borders."],
-    subtext:
-      "Checkout on the vendor's own site in their currency, and pay KOI one simple delivery fee in NGN.",
-    ctaLabel: "Explore Brands",
-    ctaHref: "/brands",
-    image: "/assets/Home-default-black.webp",
-  },
+const BG_IMAGES = [
+  "/assets/hero-image.avif",
+  "/assets/makeup.jpg",
+  "/shoes/shoe-7.avif",
+  "/assets/airpod.jpg",
 ];
 
-const AUTOPLAY_MS = 6000;
+const container = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.15 },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: "easeOut" as const } },
+};
+
+function scrollToHow() {
+  document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+}
 
 export function Hero() {
-  const [index, setIndex] = useState(0);
+  return (
+    <section className="relative flex min-h-[72vh] flex-col justify-end overflow-hidden pt-24 md:min-h-[82vh] md:pt-32">
+      {/* base gradient */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(145deg, #001830 0%, #003874 45%, var(--color-primary) 100%)",
+        }}
+      />
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex((current) => (current + 1) % SLIDES.length);
-    }, AUTOPLAY_MS);
-    return () => clearInterval(timer);
-  }, []);
-
-  const slide = SLIDES[index];
-  const goTo = (next: number) => setIndex((next + SLIDES.length) % SLIDES.length);
-
-  const SlideControls = (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          aria-label="Previous slide"
-          onClick={() => goTo(index - 1)}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition-colors duration-150 hover:border-primary hover:text-primary"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <span className="font-display text-sm text-text-primary">
-          <span className="font-bold">0{index + 1}</span>
-          <span className="text-text-muted"> / 0{SLIDES.length}</span>
-        </span>
-        <button
-          type="button"
-          aria-label="Next slide"
-          onClick={() => goTo(index + 1)}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition-colors duration-150 hover:border-primary hover:text-primary"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className="flex items-center gap-2">
-        {SLIDES.map((_, dotIndex) => (
-          <button
-            key={dotIndex}
-            type="button"
-            aria-label={`Go to slide ${dotIndex + 1}`}
-            onClick={() => goTo(dotIndex)}
-            className={`h-1 rounded-full transition-all duration-300 ${
-              dotIndex === index ? "w-10 bg-primary" : "w-5 bg-border"
-            }`}
-          />
+      {/* dimmed image grid */}
+      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0.5 opacity-[0.28] md:grid-cols-4 md:grid-rows-1 md:opacity-[0.32]">
+        {BG_IMAGES.map((src) => (
+          <div key={src} className="relative h-full w-full">
+            <Image src={src} alt="" fill className="object-cover object-top" />
+          </div>
         ))}
       </div>
-    </div>
-  );
 
-  const handleDragEnd = (_: unknown, info: { offset: { x: number } }) => {
-    const SWIPE_THRESHOLD = 60;
-    if (info.offset.x < -SWIPE_THRESHOLD) goTo(index + 1);
-    else if (info.offset.x > SWIPE_THRESHOLD) goTo(index - 1);
-  };
+      {/* top-to-bottom darkening gradient */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,20,0.12) 100%)",
+        }}
+      />
 
-  return (
-    <Reveal>
-      <section className="relative w-full overflow-hidden bg-background md:min-h-[90vh]">
-        {/* Mobile layout — image card up top, swipeable, copy below */}
-        <div className="flex flex-col gap-6 px-4 pb-10 pt-6 md:hidden">
-          <div className="relative mx-auto aspect-[1919/899] w-full max-w-md">
-            <div
-              aria-hidden="true"
-              className="absolute -inset-2 -rotate-2 rounded-modal bg-primary-soft"
-            />
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.97 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.97 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                dragElastic={0.15}
-                onDragEnd={handleDragEnd}
-                className="absolute inset-0 touch-pan-y overflow-hidden rounded-modal"
-              >
-                <Image
-                  src={slide.image}
-                  alt={slide.headline.join(" ")}
-                  fill
-                  sizes="100vw"
-                  className="object-contain object-center drop-shadow-lg"
-                  priority={index === 0}
-                />
-              </motion.div>
-            </AnimatePresence>
+      {/* blue glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-24 left-1/2 h-[400px] w-[600px] -translate-x-1/2 bg-primary/40 blur-3xl md:left-[22%] md:h-[600px] md:w-[1000px] md:-translate-x-0 md:-bottom-48"
+      />
+
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="relative z-[2] mx-auto w-full max-w-[1680px] px-5 pb-11 md:px-16 md:pb-[72px]"
+      >
+        <motion.div
+          variants={item}
+          className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/25 px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[1.5px] text-accent-blue-light md:mb-6 md:px-[18px] md:text-xs"
+        >
+          <span className="relative flex h-[7px] w-[7px] rounded-full bg-success">
+            <span className="absolute inset-0 animate-ping rounded-full bg-success opacity-60" />
+          </span>
+          Now accepting orders
+        </motion.div>
+
+        <motion.h1
+          variants={item}
+          className="mb-4 text-[clamp(38px,11vw,64px)] font-black leading-[1.03] tracking-[-1px] text-white md:mb-[22px] md:text-[clamp(56px,6.2vw,88px)] md:tracking-[-2px] xl:text-[92px]"
+        >
+          Shop the world.
+          <br />
+          Pay in{" "}
+          <em
+            className="not-italic"
+            style={{ color: "transparent", WebkitTextStroke: "2px var(--color-accent-blue)" }}
+          >
+            naira.
+          </em>
+        </motion.h1>
+
+        <motion.p
+          variants={item}
+          className="mb-7 max-w-[320px] text-[15px] leading-[1.7] text-white/55 md:mb-[34px] md:max-w-[480px] md:text-lg"
+        >
+          Nike, Zara, Gucci, Sephora &amp; 500+ global brands delivered to your doorstep in
+          Nigeria. No dollar card needed.
+        </motion.p>
+
+        <motion.div variants={item} className="mb-10 flex flex-wrap gap-3 md:mb-[52px] md:gap-4">
+          <Link
+            href="/brands"
+            className="rounded-2xl bg-surface px-6 py-[13px] text-sm font-extrabold text-primary shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(0,0,0,0.4)] md:px-8 md:py-4 md:text-[15px]"
+          >
+            Explore Brands →
+          </Link>
+          <button
+            type="button"
+            onClick={scrollToHow}
+            className="rounded-2xl border-[1.5px] border-white/25 bg-white/[0.08] px-6 py-[13px] text-sm font-semibold text-white/85 transition-all duration-200 hover:border-white/50 hover:bg-white/15 md:px-8 md:py-4 md:text-[15px]"
+          >
+            How it works
+          </button>
+        </motion.div>
+
+        <motion.div
+          variants={item}
+          className="flex gap-8 border-t border-white/10 pt-6 md:gap-14 md:pt-[30px]"
+        >
+          <div>
+            <div className="text-2xl font-black leading-none text-white md:text-[32px]">
+              500+
+            </div>
+            <div className="mt-[3px] text-[11px] font-medium text-white/40 md:text-xs">
+              Global Brands
+            </div>
           </div>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="flex flex-col gap-3"
-            >
-              <span className="w-fit rounded-full bg-primary-soft px-4 py-1.5 font-sans text-sm font-medium text-primary">
-                New In
-              </span>
-              <h1 className="font-display text-3xl font-bold leading-tight text-text-primary">
-                {slide.headline[0]}
-                <br />
-                {slide.headline[1]}
-              </h1>
-              <p className="font-sans text-base leading-relaxed text-text-secondary">
-                {slide.subtext}
-              </p>
-              <div className="mt-1">
-                <Link
-                  href={slide.ctaHref}
-                  className="inline-flex items-center justify-center rounded-button bg-primary px-6 py-3 font-display text-sm font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary-hover"
-                >
-                  {slide.ctaLabel}
-                </Link>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {SlideControls}
-        </div>
-
-        {/* Desktop layout — full-bleed overlay image with copy on top */}
-        <div className="hidden md:block">
-          {/* Decorative diagonal KOI blue shape behind image */}
-          <div
-            aria-hidden="true"
-            className="absolute -bottom-16 right-[5%] h-[110%] w-[55%] rotate-[14deg] rounded-3xl bg-primary opacity-10"
-          />
-
-          {/* Product image */}
-          <div className="absolute -top-14 -bottom-24 right-0 w-[92%]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: 32 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -32 }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-                className="absolute inset-0 drop-shadow-2xl"
-              >
-                <Image
-                  src={slide.image}
-                  alt={slide.headline.join(" ")}
-                  fill
-                  sizes="92vw"
-                  className="object-contain object-bottom"
-                  priority={index === 0}
-                />
-              </motion.div>
-            </AnimatePresence>
+          <div>
+            <div className="text-2xl font-black leading-none text-white md:text-[32px]">
+              7–14d
+            </div>
+            <div className="mt-[3px] text-[11px] font-medium text-white/40 md:text-xs">
+              Delivery
+            </div>
           </div>
-
-          <div className="absolute inset-x-0 top-20 z-10 px-16 mt-20">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -16 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="flex max-w-lg flex-col gap-5"
-              >
-                <span className="w-fit rounded-full bg-primary-soft px-4 py-1.5 font-sans text-sm font-medium text-primary">
-                  New In
-                </span>
-                <h1 className="font-display text-5xl font-bold leading-tight text-text-primary">
-                  {slide.headline[0]}
-                  <br />
-                  {slide.headline[1]}
-                </h1>
-                <p className="font-sans text-lg leading-relaxed text-text-secondary">
-                  {slide.subtext}
-                </p>
-                <div>
-                  <Link
-                    href={slide.ctaHref}
-                    className="inline-flex items-center justify-center rounded-button bg-primary px-6 py-3 font-display text-base font-medium text-primary-foreground transition-colors duration-150 hover:bg-primary-hover"
-                  >
-                    {slide.ctaLabel}
-                  </Link>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+          <div>
+            <div className="text-2xl font-black leading-none text-white md:text-[32px]">₦0</div>
+            <div className="mt-[3px] text-[11px] font-medium text-white/40 md:text-xs">
+              Dollar card needed
+            </div>
           </div>
-
-          <div className="absolute inset-x-0 bottom-6 z-20 px-16">{SlideControls}</div>
-        </div>
-      </section>
-    </Reveal>
+        </motion.div>
+      </motion.div>
+    </section>
   );
 }

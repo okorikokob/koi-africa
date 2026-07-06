@@ -1,6 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import { Heart } from "lucide-react";
 import type { Product } from "@/types";
+import { useCart } from "@/lib/cart-context";
+import { formatPriceAsNaira, toNaira } from "@/lib/currency";
 
 type Props = {
   product: Product;
@@ -8,23 +14,23 @@ type Props = {
 
 function badgeClasses(tag?: Product["tag"]) {
   switch (tag) {
-    case "new":
-      return "text-primary";
     case "bestseller":
-      return "text-error";
+      return "bg-error text-white";
+    case "new":
+      return "bg-primary text-white";
     default:
-      return "text-success";
+      return "bg-success text-white";
   }
 }
 
 function badgeLabel(tag?: Product["tag"]) {
   switch (tag) {
-    case "new":
-      return "New Arrival";
     case "bestseller":
-      return "Best Seller";
+      return "🔥 Hot";
+    case "new":
+      return "New";
     default:
-      return "Featured";
+      return "Sale";
   }
 }
 
@@ -35,44 +41,84 @@ function toProductHref(product: Product): string {
 }
 
 export function ProductCard({ product }: Props) {
+  const { addItem } = useCart();
+  const [wished, setWished] = useState(false);
+
+  const priceNaira = toNaira(product.priceAmount, product.priceCurrency);
+
   return (
     <Link
       href={toProductHref(product)}
-      className="group block overflow-hidden rounded-card border border-border bg-surface shadow-sm transition-shadow duration-250 hover:shadow-md"
+      className="group block overflow-hidden rounded-2xl border border-border bg-surface transition-all duration-200 hover:-translate-y-1 hover:border-transparent hover:shadow-md"
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden">
-        {product.tag && (
-          <span
-            className={`absolute left-3 top-3 z-10 rounded-full bg-surface px-3 py-1 font-sans text-[11px] font-medium shadow-sm ${badgeClasses(product.tag)}`}
-          >
-            {badgeLabel(product.tag)}
-          </span>
-        )}
+      <div className="relative aspect-square w-full overflow-hidden bg-surface-secondary">
+        <span
+          className={`absolute left-2 top-2 z-10 rounded-full px-2.5 py-[3px] text-[9px] font-extrabold uppercase tracking-[0.5px] md:left-3 md:top-3 md:text-[10px] ${badgeClasses(product.tag)}`}
+        >
+          {badgeLabel(product.tag)}
+        </span>
+        <button
+          type="button"
+          aria-label="Add to wishlist"
+          onClick={(e) => {
+            e.preventDefault();
+            setWished((w) => !w);
+          }}
+          className={`absolute right-2 top-2 z-10 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-surface shadow-sm transition-transform active:scale-125 md:right-3 md:top-3 md:h-[38px] md:w-[38px] ${
+            wished ? "text-error" : "text-text-muted"
+          }`}
+        >
+          <Heart
+            className="h-[14px] w-[14px] md:h-[17px] md:w-[17px]"
+            fill={wished ? "currentColor" : "none"}
+            strokeWidth={2}
+          />
+        </button>
         {product.imageUrl ? (
           <Image
             src={product.imageUrl}
             alt={product.title}
             fill
             sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw"
-            className="object-cover transition-transform duration-250 group-hover:scale-[1.02]"
+            className="object-cover object-top transition-transform duration-[400ms] group-hover:scale-[1.07]"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-surface-secondary text-xs text-text-muted">
+          <div className="flex h-full w-full items-center justify-center text-xs text-text-muted">
             No image
           </div>
         )}
       </div>
-      <div className="space-y-1 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <p className="line-clamp-2 font-display text-sm font-semibold text-text-primary">
-            {product.title}
-          </p>
-          <p className="shrink-0 font-sans text-sm font-semibold text-text-primary">
-            {product.priceCurrency} {product.priceAmount.toLocaleString()}
-          </p>
+      <div className="p-3 md:p-[18px]">
+        <p className="mb-[5px] text-[10px] font-extrabold uppercase tracking-[0.8px] text-primary md:text-[11px]">
+          {product.brandName}
+        </p>
+        <p className="mb-2.5 line-clamp-2 min-h-[35px] font-sans text-[13px] font-semibold leading-[1.35] text-text-primary md:mb-3.5 md:min-h-[42px] md:text-[15px]">
+          {product.title}
+        </p>
+        <div className="flex items-end justify-between gap-1">
+          <div>
+            <div className="text-sm font-black text-text-primary md:text-[17px]">
+              {formatPriceAsNaira(product.priceAmount, product.priceCurrency)}
+            </div>
+            <div className="mt-px text-[10px] text-text-muted md:text-[11px]">+ KOI delivery</div>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              addItem({
+                id: product.id,
+                title: product.title,
+                brandName: product.brandName,
+                image: product.imageUrl,
+                priceNaira,
+              });
+            }}
+            className="flex-shrink-0 whitespace-nowrap rounded-lg bg-primary-soft px-2.5 py-1.5 text-[11px] font-extrabold text-primary transition-colors duration-150 hover:bg-primary hover:text-white active:scale-95 md:rounded-[10px] md:px-4 md:py-[9px] md:text-xs"
+          >
+            + Add
+          </button>
         </div>
-        <p className="font-sans text-sm text-text-secondary">{product.brandName}</p>
-        <p className="font-sans text-xs text-text-muted">+ KOI delivery</p>
       </div>
     </Link>
   );

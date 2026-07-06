@@ -1,20 +1,48 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight, Heart, ArrowLeft } from "lucide-react";
+import type { Product } from "@/types";
 
 type Props = {
   images: string[];
   title: string;
   activeIndex: number;
   onSelect: (index: number) => void;
-  rating?: number;
+  tag?: Product["tag"];
 };
 
-export function ProductGallery({ images = [], title, activeIndex, onSelect, rating }: Props) {
+function badgeClasses(tag?: Product["tag"]) {
+  switch (tag) {
+    case "bestseller":
+      return "bg-error text-white";
+    case "new":
+      return "bg-primary text-white";
+    default:
+      return "";
+  }
+}
+
+function badgeLabel(tag?: Product["tag"]) {
+  switch (tag) {
+    case "bestseller":
+      return "🔥 Hot";
+    case "new":
+      return "New";
+    default:
+      return null;
+  }
+}
+
+export function ProductGallery({ images = [], title, activeIndex, onSelect, tag }: Props) {
+  const router = useRouter();
+  const [wished, setWished] = useState(false);
   const safeIndex = Math.max(0, Math.min(activeIndex, Math.max(0, images.length - 1)));
   const activeImage = images[safeIndex] ?? "";
   const showThumbs = images.length > 1;
+  const label = badgeLabel(tag);
 
   const prev = () => onSelect(safeIndex > 0 ? safeIndex - 1 : images.length - 1);
   const next = () => onSelect(safeIndex < images.length - 1 ? safeIndex + 1 : 0);
@@ -51,15 +79,36 @@ export function ProductGallery({ images = [], title, activeIndex, onSelect, rati
 
       {/* Main image area */}
       <div className="relative min-w-0 flex-1">
-        <div className="relative aspect-square w-full overflow-hidden rounded-card bg-surface-secondary">
+        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-surface-secondary">
 
-          {/* Highly Rated badge — only if rating >= 4.5 */}
-          {rating !== undefined && rating >= 4.5 && (
-            <div className="absolute left-4 top-4 z-10 flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5 shadow-md">
-              <Star className="h-3.5 w-3.5 fill-warning text-warning" />
-              <span className="font-sans text-xs font-semibold text-text-primary">Highly Rated</span>
-            </div>
+          {/* Back button — mobile only */}
+          <button
+            type="button"
+            aria-label="Go back"
+            onClick={() => router.back()}
+            className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-surface/90 shadow-md backdrop-blur-sm lg:hidden"
+          >
+            <ArrowLeft className="h-4 w-4 text-text-primary" />
+          </button>
+
+          {label && (
+            <span
+              className={`absolute left-[62px] top-4 z-10 rounded-full px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.5px] lg:left-4 ${badgeClasses(tag)}`}
+            >
+              {label}
+            </span>
           )}
+
+          <button
+            type="button"
+            aria-label="Add to wishlist"
+            onClick={() => setWished((w) => !w)}
+            className={`absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-surface/90 shadow-md backdrop-blur-sm transition-transform active:scale-125 ${
+              wished ? "text-error" : "text-text-muted"
+            }`}
+          >
+            <Heart className="h-[18px] w-[18px]" fill={wished ? "currentColor" : "none"} strokeWidth={2} />
+          </button>
 
           {activeImage ? (
             <Image

@@ -25,7 +25,7 @@ export default async function ProductDetailPage({ params }: Props) {
         <nav className="mb-8 flex items-center gap-1.5 font-sans text-sm text-text-muted">
           <Link href="/" className="transition-colors duration-150 hover:text-text-primary">Home</Link>
           <ChevronRight className="h-3.5 w-3.5" />
-          <Link href="/products" className="transition-colors duration-150 hover:text-text-primary">Products</Link>
+          <Link href="/brands" className="transition-colors duration-150 hover:text-text-primary">Brands</Link>
           <ChevronRight className="h-3.5 w-3.5" />
           <span className="line-clamp-1 text-text-primary">{product.title}</span>
         </nav>
@@ -39,7 +39,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 <h2 className="font-display text-2xl font-bold text-text-primary md:text-3xl">
                   You might also like
                 </h2>
-                <Link href="/products" className="font-sans text-sm font-medium text-primary transition-colors duration-150 hover:text-primary-hover">
+                <Link href="/brands" className="font-sans text-sm font-medium text-primary transition-colors duration-150 hover:text-primary-hover">
                   View all
                 </Link>
               </div>
