@@ -39,7 +39,7 @@ export function ProductDetailClient({ product }: Props) {
         title={product.title}
         activeIndex={activeIndex}
         onSelect={setActiveIndex}
-        rating={product.rating}
+        tag={product.tag}
       />
       <ProductInfo
         product={product}

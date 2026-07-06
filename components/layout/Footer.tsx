@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 const COMPANY_LINKS = [
@@ -9,9 +10,9 @@ const COMPANY_LINKS = [
 
 const SHOP_LINKS = [
   { label: "All Brands", href: "/brands" },
-  { label: "Fashion", href: "/products?category=fashion" },
-  { label: "Beauty", href: "/products?category=beauty" },
-  { label: "Tech", href: "/products?category=tech" },
+  { label: "Fashion", href: "/brands" },
+  { label: "Beauty", href: "/brands" },
+  { label: "Tech", href: "/brands" },
 ];
 
 const HELP_LINKS = [
@@ -58,8 +59,8 @@ export function Footer() {
   return (
     <footer className="bg-ink px-5 pb-9 pt-11 md:px-16 md:pb-11 md:pt-[72px]">
       <div className="mx-auto max-w-[1680px]">
-        <div className="mb-2.5 font-display text-[22px] font-black tracking-[3px] text-white md:text-2xl">
-          K<em className="not-italic text-primary">O</em>I
+        <div className="relative mb-2.5 h-8 w-[72px] md:h-9 md:w-[82px]">
+          <Image src="/koi-logo-light.svg" alt="KOI" fill className="object-contain object-left" />
         </div>
         <p className="mb-7 max-w-xs font-sans text-[13px] leading-[1.65] text-white/40 md:mb-8 md:max-w-sm">
           Your gateway to global shopping. Browse hundreds of international brands and pay in

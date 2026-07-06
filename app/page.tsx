@@ -6,12 +6,15 @@ import { PromoBanner } from "@/components/home/PromoBanner";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { Reveal } from "@/components/motion/Reveal";
-import { getFeaturedProducts } from "@/lib/catalog-db";
+import { getFeaturedProducts, getBrandSummaries } from "@/lib/catalog-db";
 import { FEATURED_PRODUCTS, FEATURED_BRANDS } from "@/lib/mock-data";
 import Link from "next/link";
 
 export default async function HomePage() {
-  const dbFeatured = await getFeaturedProducts(8);
+  const [dbFeatured, brandSummaries] = await Promise.all([
+    getFeaturedProducts(8),
+    getBrandSummaries(FEATURED_BRANDS),
+  ]);
   const trendingProducts = (dbFeatured.length > 0 ? dbFeatured : FEATURED_PRODUCTS).slice(0, 4);
 
   return (
@@ -19,7 +22,7 @@ export default async function HomePage() {
       <Hero />
       <Marquee />
       <CategoryPills />
-      <FeaturedBrands brands={FEATURED_BRANDS} />
+      <FeaturedBrands summaries={brandSummaries} />
 
       <div className="bg-surface-secondary px-5 py-8 md:py-0">
         <div className="md:mx-auto md:max-w-[1680px] md:px-16 md:py-[72px]">

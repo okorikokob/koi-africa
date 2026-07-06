@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -39,7 +40,7 @@ export function Navbar() {
 
   const goToSearch = () => {
     setIsMenuOpen(false);
-    router.push("/products?focus=search");
+    router.push("/brands");
   };
 
   const mobileMenu = (
@@ -110,12 +111,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 h-[60px] w-full border-b border-border bg-background/96 backdrop-blur-xl md:h-[76px]">
       <div className="mx-auto flex h-full max-w-[1680px] items-center justify-between px-5 md:px-8">
-        <Link
-          href="/"
-          className="font-display text-2xl font-black tracking-[3px] text-text-primary md:text-[27px] md:tracking-[4px]"
-          aria-label="KOI home"
-        >
-          K<em className="not-italic text-primary">O</em>I
+        <Link href="/" className="relative h-8 w-[70px] shrink-0 md:h-9 md:w-[80px]" aria-label="KOI home">
+          <Image src="/koi-logo.svg" alt="KOI" fill className="object-contain object-left" priority />
         </Link>
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-9 md:flex">

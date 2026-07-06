@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
 import Image from "next/image";
-import { ShoppingBag, ClipboardList, Package, Star, ChevronDown, Ruler } from "lucide-react";
-import { BuyOnVendorButton } from "@/components/product/BuyOnVendorButton";
+import { Star, ChevronDown, Ruler, Minus, Plus } from "lucide-react";
+import { useCart } from "@/lib/cart-context";
+import { formatNaira, toNaira } from "@/lib/currency";
 import type { Product } from "@/types";
 import type { ProductVariant } from "@/lib/shopify-catalog";
 
@@ -13,10 +13,11 @@ type Props = {
   onColorChange?: (colorName: string, images: string[]) => void;
 };
 
-const STEPS = [
-  { icon: ShoppingBag, label: "Buy on vendor site" },
-  { icon: ClipboardList, label: "Submit your order on KOI" },
-  { icon: Package, label: "We deliver to your door" },
+const TRUST_FEATURES = [
+  "100% authentic — sourced from the official brand",
+  "Pay in naira via Paystack, no dollar card needed",
+  "Delivered to your door in 7–14 days",
+  "Price includes product, shipping & KOI delivery",
 ];
 
 // Best-effort colour name → hex for fallback circles
@@ -93,6 +94,7 @@ function AccordionSection({
 }
 
 export function ProductInfo({ product, onColorChange }: Props) {
+  const { addItem } = useCart();
   const variants: ProductVariant[] = product.variants ?? [];
   const options = product.options ?? [];
   const colorImages = product.colorImages ?? {};
@@ -108,6 +110,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
     colorOption?.values[0] ?? null,
   );
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [qty, setQty] = useState(1);
 
   function handleColorSelect(value: string) {
     setSelectedColor(value);
@@ -170,20 +173,26 @@ export function ProductInfo({ product, onColorChange }: Props) {
     );
   }, [variants, colorOption, sizeOption, selectedColor]);
 
-  // Prefer variant productUrl (vendor page with color+size pre-selected).
-  // If no variant matched (MCP only returns 1 variant), fall back to the product page URL
-  // so the user lands on the vendor product page and can pick their color there.
-  const buyUrl =
-    selectedVariant?.productUrl ||
-    selectedVariant?.checkoutUrl ||
-    product.productPageUrl ||
-    product.vendorUrl;
   const displayPrice = selectedVariant?.price ?? product.priceAmount;
   const displayCurrency = selectedVariant?.currency ?? product.priceCurrency;
   const needsSize = !!sizeOption && !selectedSize;
+  const priceNaira = toNaira(displayPrice, displayCurrency);
+
+  function handleAddToCart() {
+    addItem(
+      {
+        id: product.id,
+        title: product.title,
+        brandName: product.brandName,
+        image: product.imageUrl,
+        priceNaira,
+      },
+      qty,
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 pb-24 md:pb-0">
 
       {/* Brand name — small, muted, above title */}
       <p className="font-sans text-sm font-medium text-text-secondary">{product.brandName}</p>
@@ -199,31 +208,25 @@ export function ProductInfo({ product, onColorChange }: Props) {
       )}
 
       {/* Price */}
-      <div className="flex items-baseline gap-2">
-        <span className="font-display text-3xl font-bold text-text-primary">
-          {displayCurrency}{" "}
-          {displayPrice.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </span>
-        <span className="font-sans text-sm text-text-muted">vendor price</span>
-      </div>
-
-      {/* Tag chip */}
-      {product.tag && (
-        <div>
-          <span
-            className={`inline-flex rounded-full px-3 py-1 font-sans text-xs font-semibold ${
-              product.tag === "new"
-                ? "bg-primary/10 text-primary"
-                : "bg-error/10 text-error"
-            }`}
-          >
-            {product.tag === "new" ? "New Arrival" : "Best Seller"}
+      <div>
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-3xl font-bold text-text-primary md:text-[38px]">
+            {formatNaira(toNaira(displayPrice, displayCurrency))}
           </span>
+          {product.tag && (
+            <span
+              className={`rounded-full px-3 py-1 font-sans text-xs font-semibold ${
+                product.tag === "new" ? "bg-primary/10 text-primary" : "bg-error/10 text-error"
+              }`}
+            >
+              {product.tag === "new" ? "New Arrival" : "Best Seller"}
+            </span>
+          )}
         </div>
-      )}
+        <p className="mt-1.5 font-sans text-xs text-text-muted md:text-sm">
+          Delivered to Nigeria in <span className="font-semibold text-text-primary">7–14 days</span> · price includes shipping &amp; KOI delivery
+        </p>
+      </div>
 
       {/* ── Colour selector ── */}
       {colorOption && colorOption.values.length > 0 && (
@@ -317,57 +320,46 @@ export function ProductInfo({ product, onColorChange }: Props) {
         </div>
       )}
 
-      {/* ── CTAs ── */}
+      {/* ── Add to cart (desktop inline row — sticky bar handles mobile) ── */}
       <div className="flex flex-col gap-3 pt-1">
         {needsSize ? (
-          <div className="inline-flex w-full cursor-default select-none items-center justify-center gap-2 rounded-button bg-primary/30 px-6 py-4 font-display text-base font-medium text-primary-foreground">
+          <div className="hidden w-full cursor-default select-none items-center justify-center gap-2 rounded-button bg-primary/30 px-6 py-4 font-display text-base font-medium text-primary-foreground md:inline-flex">
             Select a size to continue
           </div>
         ) : (
-          <BuyOnVendorButton vendorUrl={buyUrl} vendorName={product.vendorName} />
+          <div className="hidden items-center gap-3 md:flex">
+            <QtyStepper qty={qty} setQty={setQty} size="lg" />
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex h-[58px] flex-1 items-center justify-center gap-2 rounded-2xl bg-primary font-display text-[17px] font-bold text-primary-foreground transition-all duration-150 hover:bg-primary-hover"
+            >
+              Add to Cart · {formatNaira(priceNaira * qty)}
+            </button>
+          </div>
         )}
-
-        <Link
-          href="/order/new"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-button border border-border bg-surface px-6 py-3.5 font-display text-sm font-medium text-text-primary transition-colors duration-150 hover:border-primary hover:text-primary"
-        >
-          Already bought it? Submit your order →
-        </Link>
-
-        <p className="text-center font-sans text-xs text-text-muted">
-          Buy on the vendor&apos;s site first, then return here to arrange delivery.
-        </p>
       </div>
 
-      {/* ── Accordions ── */}
-      <div className="mt-2">
-        <AccordionSection title="Product Details" defaultOpen={!!product.description}>
-          {product.description ? (
-            <p className="font-sans text-sm leading-relaxed text-text-secondary">
-              {product.description}
-            </p>
-          ) : (
-            <p className="font-sans text-sm text-text-muted">No additional details available.</p>
-          )}
-        </AccordionSection>
+      {/* ── Product Details — flat, always visible ── */}
+      <div className="border-t border-border pt-[22px]">
+        <h2 className="mb-2.5 font-display text-[13px] font-extrabold text-text-primary">
+          Product Details
+        </h2>
+        <p className="mb-[18px] font-sans text-sm leading-[1.7] text-text-secondary">
+          {product.description || "No additional details available."}
+        </p>
+        <div className="flex flex-col gap-2.5">
+          {TRUST_FEATURES.map((feature) => (
+            <div key={feature} className="flex items-start gap-2.5">
+              <span className="shrink-0 font-sans text-sm font-black leading-[1.5] text-success">✓</span>
+              <span className="font-sans text-[13px] leading-[1.5] text-text-secondary">{feature}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        <AccordionSection title="Shipping & Returns">
-          <div className="flex flex-col gap-2.5">
-            {[
-              "Pay the vendor in their currency on their site",
-              "Come back to KOI and submit your order details",
-              "KOI reviews and quotes your delivery fee in NGN",
-              "Pay the delivery fee via Paystack — no foreign card needed",
-              "KOI ships internationally and delivers to your door",
-            ].map((item) => (
-              <div key={item} className="flex items-start gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                <span className="font-sans text-sm leading-relaxed text-text-secondary">{item}</span>
-              </div>
-            ))}
-          </div>
-        </AccordionSection>
-
+      {/* ── Reviews accordion ── */}
+      <div>
         {/* Reviews — stars inline in the header */}
         <AccordionSection
           title={`Reviews${product.reviewCount ? ` (${product.reviewCount})` : ""}`}
@@ -410,38 +402,68 @@ export function ProductInfo({ product, onColorChange }: Props) {
                   )}
                 </div>
               </div>
-              {product.vendorUrl && (
-                <a
-                  href={product.vendorUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-sans text-sm font-medium text-primary transition-colors duration-150 hover:underline"
-                >
-                  See all reviews on vendor site →
-                </a>
-              )}
             </div>
           ) : (
             <p className="font-sans text-sm text-text-muted">No reviews yet.</p>
           )}
         </AccordionSection>
-
-        {/* How KOI Works */}
-        <AccordionSection title="How KOI Works">
-          <div className="flex flex-col gap-4">
-            {STEPS.map((step, i) => (
-              <div key={step.label} className="flex items-center gap-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <step.icon className="h-4 w-4 text-primary" strokeWidth={1.75} />
-                </div>
-                <span className="font-sans text-sm text-text-secondary">
-                  <span className="font-semibold text-text-primary">{i + 1}.</span> {step.label}
-                </span>
-              </div>
-            ))}
-          </div>
-        </AccordionSection>
       </div>
+
+      {/* ── Sticky mobile add-to-cart bar ── */}
+      <div className="fixed inset-x-0 bottom-0 z-[900] border-t border-border bg-surface/95 px-4 py-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden">
+        {needsSize ? (
+          <div className="flex h-[52px] w-full cursor-default select-none items-center justify-center gap-2 rounded-2xl bg-primary/30 font-display text-sm font-medium text-primary-foreground">
+            Select a size to continue
+          </div>
+        ) : (
+          <div className="mx-auto flex max-w-[520px] items-center gap-3">
+            <QtyStepper qty={qty} setQty={setQty} size="sm" />
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-primary font-display text-base font-bold text-primary-foreground transition-all duration-150 hover:bg-primary-hover"
+            >
+              Add to Cart · {formatNaira(priceNaira * qty)}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QtyStepper({
+  qty,
+  setQty,
+  size = "lg",
+}: {
+  qty: number;
+  setQty: React.Dispatch<React.SetStateAction<number>>;
+  size?: "sm" | "lg";
+}) {
+  const height = size === "lg" ? "h-[58px]" : "h-[52px]";
+  const btnWidth = size === "lg" ? "w-11" : "w-10";
+  return (
+    <div className={`flex ${height} shrink-0 items-center overflow-hidden rounded-2xl border-[1.5px] border-border bg-surface`}>
+      <button
+        type="button"
+        aria-label="Decrease quantity"
+        onClick={() => setQty((q) => Math.max(1, q - 1))}
+        className={`flex h-full ${btnWidth} items-center justify-center text-text-primary transition-colors hover:bg-surface-secondary`}
+      >
+        <Minus className="h-4 w-4" />
+      </button>
+      <span className="min-w-[26px] text-center font-display text-sm font-black text-text-primary">
+        {qty}
+      </span>
+      <button
+        type="button"
+        aria-label="Increase quantity"
+        onClick={() => setQty((q) => q + 1)}
+        className={`flex h-full ${btnWidth} items-center justify-center text-text-primary transition-colors hover:bg-surface-secondary`}
+      >
+        <Plus className="h-4 w-4" />
+      </button>
     </div>
   );
 }

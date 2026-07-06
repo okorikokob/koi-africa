@@ -32,7 +32,7 @@ export function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="scroll-mt-20 bg-background px-5 py-10 md:mx-auto md:max-w-[1680px] md:px-16 md:py-[72px]"
+      className="w-full scroll-mt-20 bg-background px-5 py-10 md:mx-auto md:max-w-[1680px] md:px-16 md:py-[72px]"
     >
       <Reveal>
         <div className="mb-6 md:mb-[38px]">
