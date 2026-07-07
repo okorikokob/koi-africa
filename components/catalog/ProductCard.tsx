@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Heart } from "lucide-react";
+import { Heart, Star, Truck, ShieldCheck } from "lucide-react";
 import type { Product } from "@/types";
 import { useCart } from "@/lib/cart-context";
 import { formatPriceAsNaira, toNaira } from "@/lib/currency";
@@ -89,12 +89,28 @@ export function ProductCard({ product }: Props) {
         )}
       </div>
       <div className="p-3 md:p-[18px]">
-        <p className="mb-[5px] text-[10px] font-extrabold uppercase tracking-[0.8px] text-primary md:text-[11px]">
-          {product.brandName}
-        </p>
-        <p className="mb-2.5 line-clamp-2 min-h-[35px] font-sans text-[13px] font-semibold leading-[1.35] text-text-primary md:mb-3.5 md:min-h-[42px] md:text-[15px]">
+        <p className="mb-1.5 line-clamp-2 min-h-[35px] font-sans text-[13px] font-semibold leading-[1.35] text-text-primary md:min-h-[42px] md:text-[15px]">
           {product.title}
         </p>
+
+        {/* Trust signals */}
+        <div className="mb-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 md:mb-3.5">
+          {product.rating !== undefined && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-text-primary md:text-[11px]">
+              <Star className="h-[11px] w-[11px] fill-warning text-warning" />
+              {product.rating.toFixed(1)}
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1 text-[10px] text-text-muted md:text-[11px]">
+            <Truck className="h-[11px] w-[11px]" />
+            7–14 day delivery
+          </span>
+          <span className="inline-flex items-center gap-1 text-[10px] text-text-muted md:text-[11px]">
+            <ShieldCheck className="h-[11px] w-[11px]" />
+            Authentic
+          </span>
+        </div>
+
         <div className="flex items-end justify-between gap-1">
           <div>
             <div className="text-sm font-black text-text-primary md:text-[17px]">

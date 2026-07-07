@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
+import { brandGradient, brandImageOverride } from "@/lib/brand-visuals";
 import type { BrandSummary } from "@/lib/catalog-db";
 
 type Props = {
@@ -32,6 +33,8 @@ export function FeaturedBrands({ summaries }: Props) {
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:grid-rows-2 md:gap-4">
         {featured.map(({ brand, productCount, imageUrl }, index) => {
           const isFeatureCard = index === 0;
+          const override = brandImageOverride(brand.slug);
+          const displayImage = override ?? imageUrl;
 
           return (
             <Link
@@ -42,32 +45,39 @@ export function FeaturedBrands({ summaries }: Props) {
               }`}
             >
               <div
-                className={`relative w-full overflow-hidden rounded-[18px] bg-surface-secondary transition-transform duration-300 group-hover:-translate-y-1 md:rounded-2xl ${
+                className={`relative w-full overflow-hidden rounded-[18px] shadow-sm transition-all duration-300 ease-out group-hover:-translate-y-2 group-hover:shadow-[0_20px_45px_-12px_rgba(0,74,173,0.45)] md:rounded-2xl ${
                   isFeatureCard
                     ? "aspect-[16/9] md:aspect-auto md:h-full"
                     : "aspect-[3/4]"
                 }`}
               >
-                {imageUrl ? (
+                {displayImage ? (
                   <Image
-                    src={imageUrl}
+                    src={displayImage}
                     alt={brand.name}
                     fill
                     sizes="(min-width: 768px) 25vw, 50vw"
-                    className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                    className={
+                      override
+                        ? "object-cover object-center transition-transform duration-500 ease-out group-hover:scale-110"
+                        : "scale-[1.18] object-cover object-center saturate-[1.2] contrast-[1.06] transition-transform duration-500 ease-out group-hover:scale-[1.3]"
+                    }
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-primary-soft">
-                    <span className="font-display text-4xl font-black text-primary">
+                  <div
+                    className="flex h-full w-full items-center justify-center"
+                    style={{ background: brandGradient(brand.name) }}
+                  >
+                    <span className="font-display text-4xl font-black text-white/90 drop-shadow-md transition-transform duration-500 ease-out group-hover:scale-110">
                       {brand.name.charAt(0)}
                     </span>
                   </div>
                 )}
                 <div
-                  className="absolute inset-0"
+                  className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-90"
                   style={{
                     background:
-                      "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0) 100%)",
+                      "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.18) 55%, rgba(0,0,0,0) 100%)",
                   }}
                 />
                 <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-5">
@@ -75,13 +85,13 @@ export function FeaturedBrands({ summaries }: Props) {
                     {brand.category}
                   </span>
                   <span
-                    className={`mb-0.5 font-black leading-none text-white ${
-                      isFeatureCard ? "text-[26px] md:text-[32px]" : "text-[20px] md:text-[24px]"
+                    className={`mb-0.5 font-black leading-none tracking-tight text-white drop-shadow-sm transition-transform duration-300 group-hover:translate-x-0.5 ${
+                      isFeatureCard ? "text-[28px] md:text-[34px]" : "text-[22px] md:text-[26px]"
                     }`}
                   >
                     {brand.name}
                   </span>
-                  <span className="text-xs font-medium text-white/55">
+                  <span className="text-xs font-medium text-white/70">
                     {productCount > 0 ? `${productCount}+ products` : "New arrivals"}
                   </span>
                 </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
@@ -73,9 +74,6 @@ export function CartDrawer() {
                         {item.title}
                         {item.qty > 1 ? ` × ${item.qty}` : ""}
                       </p>
-                      <p className="font-sans text-[11px] font-bold text-primary">
-                        {item.brandName}
-                      </p>
                     </div>
                     <span className="flex-shrink-0 font-sans text-sm font-black text-text-primary">
                       {formatNaira(item.priceNaira * item.qty)}
@@ -103,12 +101,13 @@ export function CartDrawer() {
                     {formatNaira(totalNaira)}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="w-full rounded-button bg-primary py-4 font-sans text-base font-extrabold text-primary-foreground transition-all hover:-translate-y-px hover:bg-primary-hover hover:shadow-md"
+                <Link
+                  href="/cart"
+                  onClick={closeCart}
+                  className="flex w-full items-center justify-center rounded-button bg-primary py-4 font-sans text-base font-extrabold text-primary-foreground transition-all hover:-translate-y-px hover:bg-primary-hover hover:shadow-md"
                 >
-                  Checkout — Pay in Naira 🇳🇬
-                </button>
+                  View Cart &amp; Checkout 🇳🇬
+                </Link>
               </div>
             )}
           </motion.div>

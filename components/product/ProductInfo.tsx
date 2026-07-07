@@ -197,6 +197,11 @@ export function ProductInfo({ product, onColorChange }: Props) {
       {/* Brand name — small, muted, above title */}
       <p className="font-sans text-sm font-medium text-text-secondary">{product.brandName}</p>
 
+      {/* Seller — shown only on product detail, small and subtle */}
+      {product.vendorName && (
+        <p className="-mt-3 font-sans text-xs text-text-secondary">Sold by {product.vendorName}</p>
+      )}
+
       {/* Title */}
       <h1 className="font-display text-3xl font-bold leading-tight text-text-primary md:text-4xl">
         {product.title}
