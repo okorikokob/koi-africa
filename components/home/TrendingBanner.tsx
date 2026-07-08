@@ -26,7 +26,7 @@ export function TrendingBanner() {
             The latest drops from global brands, curated for you and delivered by KOI
           </p>
           <Link
-            href="/products"
+            href="/brands"
             className="inline-flex items-center justify-center rounded-button border border-white px-6 py-3 font-display text-sm font-medium text-white transition-colors duration-150 hover:bg-white hover:text-text-primary md:text-base"
           >
             Shop Now

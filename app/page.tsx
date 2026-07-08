@@ -38,7 +38,7 @@ export default async function HomePage() {
               </div>
             </div>
             <Link
-              href="/products"
+              href="/brands"
               className="mt-1 flex-shrink-0 whitespace-nowrap font-sans text-[13px] font-bold text-primary hover:underline md:text-[15px]"
             >
               View all
