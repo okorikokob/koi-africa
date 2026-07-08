@@ -35,3 +35,18 @@ export const checkoutFormSchema = z.object({
 });
 
 export type CheckoutFormInput = z.infer<typeof checkoutFormSchema>;
+
+// Chowdeck payment initialization — checkout details + cart items to be
+// re-priced server-side from the `products` table (never trust client amounts).
+export const initializePaymentSchema = checkoutFormSchema.extend({
+  items: z
+    .array(
+      z.object({
+        productId: z.string().min(1),
+        qty: z.number().int().positive(),
+      }),
+    )
+    .min(1, "Your cart is empty"),
+});
+
+export type InitializePaymentInput = z.infer<typeof initializePaymentSchema>;

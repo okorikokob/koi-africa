@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Lock } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatNaira } from "@/lib/currency";
 import { calculateDeliveryFee } from "@/lib/pricing-config";
@@ -13,10 +13,38 @@ import type { CheckoutFormInput } from "@/lib/schemas";
 export default function CheckoutPage() {
   const { items, totalNaira } = useCart();
   const [isFormValid, setIsFormValid] = useState(false);
-  const [, setFormData] = useState<CheckoutFormInput | null>(null);
+  const [formData, setFormData] = useState<CheckoutFormInput | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   const deliveryFee = calculateDeliveryFee(totalNaira);
   const total = totalNaira + deliveryFee;
+
+  async function handlePay() {
+    if (!formData) return;
+    setIsSubmitting(true);
+    setPayError(null);
+    try {
+      const res = await fetch("/api/payments/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          items: items.map((item) => ({ productId: item.id, qty: item.qty })),
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        window.location.href = json.data.authorizationUrl;
+      } else {
+        setPayError(json.error ?? "Something went wrong. Please try again.");
+        setIsSubmitting(false);
+      }
+    } catch {
+      setPayError("Could not reach the server. Please try again.");
+      setIsSubmitting(false);
+    }
+  }
 
   if (items.length === 0) {
     return (
@@ -93,19 +121,24 @@ export default function CheckoutPage() {
 
           <button
             type="button"
-            disabled
-            aria-disabled="true"
-            title="Payment is coming soon"
-            className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-button bg-primary/40 py-4 font-sans text-base font-extrabold text-primary-foreground opacity-70"
+            disabled={!isFormValid || isSubmitting}
+            onClick={handlePay}
+            className="flex w-full items-center justify-center gap-2 rounded-button bg-primary py-4 font-sans text-base font-extrabold text-primary-foreground transition-all hover:-translate-y-px hover:bg-primary-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none"
           >
-            <Lock className="h-4 w-4" />
-            Pay {formatNaira(total)} — Coming Soon
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Lock className="h-4 w-4" />
+            )}
+            {isSubmitting ? "Redirecting to Paystack…" : `Pay ${formatNaira(total)}`}
           </button>
 
           <p className="mt-3 text-center font-sans text-xs text-text-muted">
-            {isFormValid
-              ? "Payment via Paystack is being wired up — check back soon."
-              : "Fill in your delivery details to continue."}
+            {payError
+              ? payError
+              : isFormValid
+                ? "You'll be redirected to Paystack to complete payment."
+                : "Fill in your delivery details to continue."}
           </p>
         </div>
       </div>

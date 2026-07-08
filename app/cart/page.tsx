@@ -44,7 +44,7 @@ export default function CartPage() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex items-center gap-4 border-b border-border py-5 first:pt-0"
+              className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border py-5 first:pt-0 sm:flex-nowrap"
             >
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-surface-secondary">
                 {item.image && (
@@ -52,10 +52,8 @@ export default function CartPage() {
                 )}
               </div>
 
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-sans text-sm font-bold text-text-primary">
-                  {item.title}
-                </p>
+              <div className="min-w-[140px] flex-1">
+                <p className="font-sans text-sm font-bold text-text-primary">{item.title}</p>
                 <p className="mt-1 font-sans text-sm font-bold text-text-primary">
                   {formatNaira(item.priceNaira)}
                 </p>
@@ -83,7 +81,7 @@ export default function CartPage() {
                 </button>
               </div>
 
-              <span className="hidden shrink-0 font-display text-base font-black text-text-primary sm:block">
+              <span className="shrink-0 font-display text-base font-black text-text-primary">
                 {formatNaira(item.priceNaira * item.qty)}
               </span>
 
