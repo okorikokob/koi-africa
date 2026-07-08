@@ -34,12 +34,10 @@ export type ShopifyProduct = {
   reviewCount?: number;
 };
 
-export async function searchShopifyProducts(
-  query: string,
-  limit = 10,
-): Promise<ShopifyProduct[]> {
-  limit = Math.min(limit, 50);
-  const res = await fetch(SHOPIFY_MCP_URL, {
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchCatalog(query: string, limit: number): Promise<Response> {
+  return fetch(SHOPIFY_MCP_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -67,9 +65,34 @@ export async function searchShopifyProducts(
       },
     }),
   });
+}
+
+export async function searchShopifyProducts(
+  query: string,
+  limit = 10,
+): Promise<ShopifyProduct[]> {
+  limit = Math.min(limit, 50);
+
+  // The MCP endpoint rate-limits aggressively (429) under concurrent load —
+  // retry with backoff before giving up, since callers often fan out requests.
+  const maxAttempts = 4;
+  let res: Response | null = null;
+  let lastText = "";
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    res = await fetchCatalog(query, limit);
+    if (res.status !== 429) break;
+    lastText = await res.text();
+    if (attempt < maxAttempts - 1) {
+      await sleep(500 * 2 ** attempt);
+    }
+  }
+
+  if (!res) {
+    throw new Error("Shopify catalog search failed: no response");
+  }
 
   if (!res.ok) {
-    const text = await res.text();
+    const text = res.status === 429 ? lastText : await res.text();
     throw new Error(`Shopify catalog search failed: ${res.status} — ${text}`);
   }
 

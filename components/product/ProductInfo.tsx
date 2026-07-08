@@ -197,6 +197,11 @@ export function ProductInfo({ product, onColorChange }: Props) {
       {/* Brand name — small, muted, above title */}
       <p className="font-sans text-sm font-medium text-text-secondary">{product.brandName}</p>
 
+      {/* Seller — shown only on product detail, small and subtle */}
+      {product.vendorName && (
+        <p className="-mt-3 font-sans text-xs text-text-secondary">Sold by {product.vendorName}</p>
+      )}
+
       {/* Title */}
       <h1 className="font-display text-3xl font-bold leading-tight text-text-primary md:text-4xl">
         {product.title}
@@ -290,7 +295,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
           </div>
 
           {/* Grid: 4 cols on mobile, 5 on sm, 6 on lg */}
-          <div className="grid grid-cols-4 gap-2 sm:grid-cols-5 lg:grid-cols-4 xl:grid-cols-6">
+          <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 sm:gap-2 lg:grid-cols-4 xl:grid-cols-6">
             {sizeOption.values.map((value) => {
               const available =
                 !colorOption ||
@@ -304,7 +309,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
                   disabled={!available}
                   onClick={() => setSelectedSize(active ? null : value)}
                   aria-pressed={active}
-                  className={`rounded-button border py-2.5 text-center font-sans text-sm font-medium transition-all duration-150 ${
+                  className={`flex min-h-[44px] items-center justify-center rounded-button border py-3 text-center font-sans text-sm font-medium transition-all duration-150 md:min-h-0 md:py-2.5 ${
                     !available
                       ? "cursor-not-allowed border-border bg-surface text-text-muted opacity-40 line-through"
                       : active

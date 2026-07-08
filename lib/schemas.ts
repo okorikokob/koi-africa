@@ -22,3 +22,16 @@ export const orderInputSchema = z.object({
 });
 
 export type OrderInput = z.infer<typeof orderInputSchema>;
+
+// Chowdeck checkout — delivery details captured against the cart at checkout time.
+export const checkoutFormSchema = z.object({
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  whatsapp: z.string().min(7, "Please enter a valid WhatsApp number"),
+  address: z.string().min(5, "Please enter a full delivery address"),
+  city: z.string().min(2, "Please enter a city"),
+  state: z.string().min(2, "Please select a state"),
+  landmark: z.string().optional(),
+});
+
+export type CheckoutFormInput = z.infer<typeof checkoutFormSchema>;

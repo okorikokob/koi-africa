@@ -22,9 +22,11 @@ export default async function HomePage() {
       <Hero />
       <Marquee />
       <CategoryPills />
-      <FeaturedBrands summaries={brandSummaries} />
+      <div className="mt-6 md:mt-10">
+        <FeaturedBrands summaries={brandSummaries} />
+      </div>
 
-      <div className="bg-surface-secondary px-5 py-8 md:py-0">
+      <div className="mt-6 bg-surface-secondary px-5 py-10 md:mt-10 md:py-6">
         <div className="md:mx-auto md:max-w-[1680px] md:px-16 md:py-[72px]">
           <Reveal className="mb-5 flex items-start justify-between gap-3 md:mb-[38px] md:items-end">
             <div>
@@ -46,8 +48,12 @@ export default async function HomePage() {
         </div>
       </div>
 
-      <PromoBanner />
-      <HowItWorks />
+      <div className="mt-6 md:mt-10">
+        <PromoBanner />
+      </div>
+      <div className="mt-6 md:mt-10">
+        <HowItWorks />
+      </div>
     </div>
   );
 }

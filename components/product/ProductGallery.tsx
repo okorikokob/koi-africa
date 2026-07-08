@@ -48,11 +48,11 @@ export function ProductGallery({ images = [], title, activeIndex, onSelect, tag 
   const next = () => onSelect(safeIndex < images.length - 1 ? safeIndex + 1 : 0);
 
   return (
-    <div className="flex gap-3 lg:sticky lg:top-24">
+    <div className="flex gap-3 -mx-4 md:mx-0 md:gap-3 lg:sticky lg:top-24">
 
       {/* Vertical thumbnail strip — hidden on mobile, visible sm+ */}
       {showThumbs && (
-        <div className="hidden shrink-0 flex-col gap-2 sm:flex">
+        <div className="hidden shrink-0 flex-col gap-2 pl-4 sm:flex md:pl-0">
           {images.map((src, i) => (
             <button
               key={src}
@@ -79,7 +79,7 @@ export function ProductGallery({ images = [], title, activeIndex, onSelect, tag 
 
       {/* Main image area */}
       <div className="relative min-w-0 flex-1">
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[24px] bg-surface-secondary">
+        <div className="relative aspect-square w-full overflow-hidden rounded-none bg-surface-secondary md:aspect-[4/5] md:rounded-[24px]">
 
           {/* Back button — mobile only */}
           <button
@@ -116,7 +116,7 @@ export function ProductGallery({ images = [], title, activeIndex, onSelect, tag 
               alt={title}
               fill
               sizes="(min-width: 1024px) 40vw, 95vw"
-              className="object-contain p-6 transition-opacity duration-200"
+              className="object-cover transition-opacity duration-200 md:object-contain md:p-6"
               priority
             />
           ) : (

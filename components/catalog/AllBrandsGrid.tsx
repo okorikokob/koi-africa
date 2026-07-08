@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { StaggerGrid, StaggerItem } from "@/components/motion/StaggerGrid";
+import { brandGradient, brandImageOverride } from "@/lib/brand-visuals";
 import type { BrandSummary } from "@/lib/catalog-db";
 
 type Props = {
@@ -22,30 +23,39 @@ const CATEGORIES = [
 
 function BrandTile({ summary }: { summary: BrandSummary }) {
   const { brand, productCount, imageUrl } = summary;
+  const override = brandImageOverride(brand.slug);
+  const displayImage = override ?? imageUrl;
 
   return (
     <Link href={`/brands/${brand.slug}`} className="group block w-full">
-      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-card bg-surface-secondary transition-transform duration-200 active:scale-[0.97] md:aspect-[4/5]">
-        {imageUrl ? (
+      <div className="relative aspect-[3/4] w-full overflow-hidden rounded-card shadow-sm transition-all duration-300 ease-out active:scale-[0.97] group-hover:-translate-y-2 group-hover:shadow-[0_20px_45px_-12px_rgba(0,74,173,0.45)] md:aspect-[4/5]">
+        {displayImage ? (
           <Image
-            src={imageUrl}
+            src={displayImage}
             alt={brand.name}
             fill
             sizes="(min-width: 768px) 25vw, 50vw"
-            className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.07]"
+            className={
+              override
+                ? "object-cover object-center transition-transform duration-500 ease-out group-hover:scale-110"
+                : "scale-[1.18] object-cover object-center saturate-[1.2] contrast-[1.06] transition-transform duration-500 ease-out group-hover:scale-[1.3]"
+            }
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-primary-soft">
-            <span className="font-display text-4xl font-black text-primary">
+          <div
+            className="flex h-full w-full items-center justify-center"
+            style={{ background: brandGradient(brand.name) }}
+          >
+            <span className="font-display text-4xl font-black text-white/90 drop-shadow-md transition-transform duration-500 ease-out group-hover:scale-110">
               {brand.name.charAt(0)}
             </span>
           </div>
         )}
 
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 transition-opacity duration-300 group-hover:opacity-90"
           style={{
-            background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.1) 60%, transparent 100%)",
+            background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)",
           }}
         />
 
@@ -53,10 +63,10 @@ function BrandTile({ summary }: { summary: BrandSummary }) {
           <span className="rounded-full border border-white/20 bg-white/15 px-2 py-[3px] font-sans text-[9px] font-extrabold uppercase tracking-[1.5px] text-white/90 backdrop-blur-sm">
             {brand.category}
           </span>
-          <span className="font-display text-lg font-black leading-none text-white md:text-[22px]">
+          <span className="font-display text-xl font-black leading-none tracking-tight text-white drop-shadow-sm transition-transform duration-300 group-hover:translate-x-0.5 md:text-2xl">
             {brand.name}
           </span>
-          <span className="font-sans text-[11px] font-medium text-white/55">
+          <span className="font-sans text-[11px] font-medium text-white/70">
             {productCount > 0 ? `${productCount}+ products` : "New arrivals"}
           </span>
         </div>

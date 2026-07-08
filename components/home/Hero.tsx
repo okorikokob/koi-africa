@@ -5,10 +5,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 const BG_IMAGES = [
-  "/assets/hero-image.avif",
-  "/assets/makeup.jpg",
   "/shoes/shoe-7.avif",
   "/assets/airpod.jpg",
+  "/assets/makeup.jpg",
+  "/assets/hero-image.avif",
 ];
 
 const container = {
@@ -38,8 +38,8 @@ export function Hero() {
         }}
       />
 
-      {/* dimmed image grid */}
-      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0.5 opacity-[0.28] md:grid-cols-4 md:grid-rows-1 md:opacity-[0.32]">
+      {/* product image grid — lightened so items are recognisable */}
+      <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0.5 opacity-[0.55] md:grid-cols-4 md:grid-rows-1 md:opacity-[0.6]">
         {BG_IMAGES.map((src) => (
           <div key={src} className="relative h-full w-full">
             <Image src={src} alt="" fill className="object-cover object-top" />
@@ -47,12 +47,21 @@ export function Hero() {
         ))}
       </div>
 
-      {/* top-to-bottom darkening gradient */}
+      {/* top-to-bottom darkening gradient — concentrated behind the text so copy stays readable */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,20,0.12) 100%)",
+            "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 32%, rgba(0,0,20,0.1) 62%, rgba(0,0,20,0.08) 100%)",
+        }}
+      />
+
+      {/* left-to-right darkening — text sits at the left, so it needs its own contrast pad independent of the vertical fade */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to right, rgba(0,10,25,0.78) 0%, rgba(0,10,25,0.45) 35%, rgba(0,10,25,0.1) 65%, rgba(0,10,25,0) 100%)",
         }}
       />
 
@@ -97,8 +106,8 @@ export function Hero() {
           variants={item}
           className="mb-7 max-w-[320px] text-[15px] leading-[1.7] text-white/55 md:mb-[34px] md:max-w-[480px] md:text-lg"
         >
-          Nike, Zara, Gucci, Sephora &amp; 500+ global brands delivered to your doorstep in
-          Nigeria. No dollar card needed.
+          Nike, Zara, Gucci, Sephora &amp; other premium global brands delivered to your
+          doorstep in Nigeria. No dollar card needed.
         </motion.p>
 
         <motion.div variants={item} className="mb-10 flex flex-wrap gap-3 md:mb-[52px] md:gap-4">
@@ -123,10 +132,10 @@ export function Hero() {
         >
           <div>
             <div className="text-2xl font-black leading-none text-white md:text-[32px]">
-              500+
+              Global
             </div>
             <div className="mt-[3px] text-[11px] font-medium text-white/40 md:text-xs">
-              Global Brands
+              Premium Brands
             </div>
           </div>
           <div>

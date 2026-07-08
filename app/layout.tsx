@@ -19,6 +19,10 @@ export const metadata: Metadata = {
   title: "KOI — Your gateway to global shopping",
   description:
     "Browse products from global brands and let KOI handle international shipping and delivery to your door in Nigeria.",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }, { url: "/favicon.ico" }],
+    shortcut: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
