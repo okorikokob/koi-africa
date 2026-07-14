@@ -8,8 +8,8 @@ Update this file after every completed feature.
 
 **Phase:** Phase 3 — Cart + Checkout + Orders
 **Business Model:** Chowdeck — customer pays FULL price in naira on KOI
-**Last completed:** Phase 2 complete — 56 products in DB, product detail page with Add to Cart
-**Next:** 09 Cart page (/cart) → 10 Checkout page → 11 Paystack full payment → 12 Order tracking
+**Last completed:** Paystack full-payment checkout live and verified working in production (Vercel)
+**Next:** Build /track order-tracking page, then remove leftover self-report-model dead code, then Phase 4 (Admin)
 
 ---
 
@@ -28,10 +28,15 @@ Update this file after every completed feature.
 - [x] 08 Product Detail — gallery, size/color selector, Add to Cart, naira prices, sticky mobile bar
 
 ### Phase 3 — Cart + Checkout + Orders
-- [ ] 09 Cart page — /cart full page with items, quantities, naira total
-- [ ] 10 Checkout — delivery details form + order summary
-- [ ] 11 Paystack — full naira payment, server-side verify, create order in InsForge
-- [ ] 12 Order confirmation + tracking pages
+- [x] 09 Cart page — /cart full page with items, quantities, naira total
+- [x] 10 Checkout — delivery details form + order summary
+- [x] 11 Paystack — full naira payment, server-side verify, create order in InsForge (confirmed working in production)
+- [x] 12a Order confirmation — /checkout/success verifies payment and shows order summary
+- [ ] 12b Order tracking page — /track does not exist yet; both success pages link to it ("Track Your Order") but it 404s
+- [ ] 12c Cleanup — remove dead code from the old self-report/pay-later-delivery-fee model, now superseded by full-payment Chowdeck flow:
+  - app/checkout/[reference]/page.tsx ("Pay delivery fee" flow)
+  - app/order/new/page.tsx
+  - app/api/orders/route.ts (stub, never wired to InsForge — TODO comment confirms it's unused)
 
 ### Phase 4 — Admin
 - [ ] 13 Admin auth + layout
