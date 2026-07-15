@@ -24,4 +24,4 @@ InsForge MCP — call fetch-docs before any InsForge code
 context/designs/koi-premium-mockup.html
 
 ## Build Status
-Phase 2 complete. Phase 3 in progress — next: wire cart to InsForge, then admin dashboard, then Paystack checkout.
+Phase 3 complete (cart, checkout, Paystack, order tracking). Phase 4 in progress — next: admin auth + layout, then admin orders list/management.

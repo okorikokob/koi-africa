@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOI Admin — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --blue:#004AAD;--blue-h:#003D8F;--blue-s:#EAF2FF;
+  --bg:#F7F7F4;--card:#FFFFFF;--text:#121212;--t2:#676760;--muted:#9B9B92;--border:#E7E7E0;
+  --success:#14AE5C;--success-s:#E8F9EF;--warn:#B8860B;--warn-s:#FDF4E3;--danger:#E5484D;--danger-s:#FDECEC;
+  --sidebar:#0A1628;
+}
+body{font-family:'Inter',sans-serif;color:var(--text);background:var(--bg)}
+img{display:block;max-width:100%}
+button{font-family:'Inter',sans-serif}
+
+.app{display:grid;grid-template-columns:264px 1fr;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{background:var(--sidebar);color:white;padding:26px 18px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.sb-logo{font-size:22px;font-weight:900;letter-spacing:3px;padding:0 10px 8px;display:flex;align-items:baseline;gap:8px}
+.sb-logo em{color:#5BA3FF;font-style:normal}
+.sb-logo small{font-size:10px;font-weight:700;color:rgba(255,255,255,0.35);letter-spacing:2px}
+.sb-divider{height:1px;background:rgba(255,255,255,0.08);margin:18px 0}
+.sb-sec-lbl{font-size:10px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.28);padding:0 12px;margin:18px 0 8px}
+.sb-nav{display:flex;flex-direction:column;gap:2px}
+.sb-item{
+  display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;
+  color:rgba(255,255,255,0.6);font-size:14px;font-weight:600;cursor:pointer;
+  transition:all .15s;border:none;background:none;text-align:left;width:100%;
+}
+.sb-item:hover{background:rgba(255,255,255,0.06);color:white}
+.sb-item.on{background:var(--blue);color:white}
+.sb-ic{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;background:rgba(255,255,255,0.12);font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px}
+.sb-item.on .sb-badge{background:rgba(255,255,255,0.25)}
+
+.sb-user{margin-top:auto;display:flex;align-items:center;gap:10px;padding:14px 12px;border-radius:12px;background:rgba(255,255,255,0.05)}
+.sb-avatar{width:36px;height:36px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0}
+.sb-uname{font-size:13px;font-weight:700}
+.sb-urole{font-size:11px;color:rgba(255,255,255,0.4)}
+.sb-logout{margin-left:auto;color:rgba(255,255,255,0.4);cursor:pointer;font-size:16px;background:none;border:none}
+.sb-logout:hover{color:white}
+
+/* MAIN */
+.main{padding:0;overflow-x:hidden}
+.topbar{
+  position:sticky;top:0;z-index:50;background:rgba(247,247,244,0.85);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);padding:18px 36px;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+}
+.tb-title{font-size:20px;font-weight:900;letter-spacing:-.3px}
+.tb-search{
+  flex:1;max-width:420px;display:flex;align-items:center;gap:10px;
+  background:white;border:1.5px solid var(--border);border-radius:12px;padding:10px 16px;
+}
+.tb-search input{border:none;outline:none;font-size:13px;flex:1;font-family:'Inter',sans-serif;background:none}
+.tb-right{display:flex;align-items:center;gap:14px}
+.tb-icon-btn{width:40px;height:40px;border-radius:11px;border:1.5px solid var(--border);background:white;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:16px;transition:all .15s}
+.tb-icon-btn:hover{border-color:var(--blue);background:var(--blue-s)}
+.tb-dot{position:absolute;top:6px;right:7px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:1.5px solid white}
+
+.content{padding:32px 36px 60px}
+.view{display:none}
+.view.on{display:block}
+
+/* KPI cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:32px}
+.kpi-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:22px}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.kpi-lbl{font-size:12px;font-weight:700;color:var(--t2)}
+.kpi-ic{width:34px;height:34px;border-radius:10px;background:var(--blue-s);display:flex;align-items:center;justify-content:center;font-size:15px}
+.kpi-val{font-size:28px;font-weight:900;letter-spacing:-.5px;margin-bottom:8px}
+.kpi-trend{font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px}
+.kpi-trend.up{color:var(--success)}
+.kpi-trend.down{color:var(--danger)}
+.kpi-trend span{color:var(--muted);font-weight:500}
+.spark{display:flex;align-items:flex-end;gap:3px;height:32px;margin-top:14px}
+.spark i{flex:1;background:var(--blue-s);border-radius:3px 3px 0 0;display:block}
+.kpi-card:nth-child(1) .spark i:last-child,.kpi-card:nth-child(2) .spark i:last-child{background:var(--blue)}
+
+/* Panels */
+.panel-row{display:grid;grid-template-columns:2fr 1fr;gap:20px;margin-bottom:28px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+.panel-title{font-size:16px;font-weight:800}
+.panel-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.panel-link{font-size:13px;font-weight:700;color:var(--blue);cursor:pointer;background:none;border:none}
+.panel-link:hover{text-decoration:underline}
+
+.chart-bars{display:flex;align-items:flex-end;gap:14px;height:180px;padding-top:10px}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:10px}
+.chart-bar{width:100%;background:linear-gradient(180deg,var(--blue),#0064E0);border-radius:8px 8px 0 0;transition:opacity .15s}
+.chart-bar:hover{opacity:.8}
+.chart-lbl{font-size:11px;color:var(--muted);font-weight:600}
+
+.legend-row{display:flex;gap:20px;margin-top:18px;padding-top:18px;border-top:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);font-weight:600}
+.legend-dot{width:9px;height:9px;border-radius:50%}
+
+/* brand split donut-ish list */
+.split-list{display:flex;flex-direction:column;gap:16px}
+.split-row{display:flex;align-items:center;gap:12px}
+.split-name{font-size:13px;font-weight:700;width:90px;flex-shrink:0}
+.split-bar-bg{flex:1;height:8px;background:var(--bg);border-radius:99px;overflow:hidden}
+.split-bar{height:100%;background:var(--blue);border-radius:99px}
+.split-pct{font-size:12px;font-weight:800;color:var(--t2);width:38px;text-align:right}
+
+/* Tables */
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);padding:0 14px 14px;border-bottom:1px solid var(--border)}
+td{padding:16px 14px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr.tbl-row{cursor:pointer;transition:background .1s}
+tr.tbl-row:hover{background:var(--bg)}
+.td-order{font-weight:800}
+.td-cust{display:flex;align-items:center;gap:10px}
+.td-avatar{width:30px;height:30px;border-radius:50%;background:var(--blue-s);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+.td-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;font-size:11px;font-weight:800}
+.pill i{width:6px;height:6px;border-radius:50%}
+.pill.processing{background:var(--warn-s);color:var(--warn)}
+.pill.processing i{background:var(--warn)}
+.pill.shipped{background:var(--blue-s);color:var(--blue)}
+.pill.shipped i{background:var(--blue)}
+.pill.delivered{background:var(--success-s);color:var(--success)}
+.pill.delivered i{background:var(--success)}
+.pill.delayed{background:var(--danger-s);color:var(--danger)}
+.pill.delayed i{background:var(--danger)}
+
+/* section shell for full views */
+.sec-head-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;gap:16px}
+.sec-head-l h2{font-size:24px;font-weight:900;letter-spacing:-.3px;margin-bottom:4px}
+.sec-head-l p{font-size:13px;color:var(--muted)}
+.filter-row{display:flex;gap:10px;align-items:center}
+.filter-chip{padding:9px 16px;border-radius:10px;border:1.5px solid var(--border);background:white;font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;transition:all .12s}
+.filter-chip.on,.filter-chip:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-s)}
+.btn-primary{background:var(--blue);color:white;border:none;padding:11px 20px;border-radius:11px;font-size:13px;font-weight:800;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-primary:hover{background:var(--blue-h)}
+
+/* Product / brand grid cards for admin */
+.admin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.admin-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;transition:all .15s;cursor:pointer}
+.admin-card:hover{box-shadow:0 10px 28px rgba(0,0,0,0.08);transform:translateY(-3px)}
+.ac-img{aspect-ratio:1;background:var(--bg);overflow:hidden;position:relative}
+.ac-img img{width:100%;height:100%;object-fit:cover;object-position:top}
+.ac-status{position:absolute;top:10px;left:10px;font-size:10px;font-weight:800;padding:4px 10px;border-radius:999px}
+.ac-status.live{background:var(--success-s);color:var(--success)}
+.ac-status.draft{background:var(--warn-s);color:var(--warn)}
+.ac-body{padding:14px}
+.ac-name{font-size:14px;font-weight:800;margin-bottom:4px}
+.ac-meta{font-size:12px;color:var(--muted)}
+.ac-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.ac-rev{font-size:13px;font-weight:800}
+.ac-dots{color:var(--muted);font-size:16px;cursor:pointer;padding:2px 6px}
+
+/* Payouts */
+.payout-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:28px}
+.ps-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:24px}
+.ps-lbl{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:10px}
+.ps-val{font-size:26px;font-weight:900;letter-spacing:-.5px}
+.ps-sub{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* Settings */
+.settings-grid{display:grid;grid-template-columns:220px 1fr;gap:32px}
+.set-nav{display:flex;flex-direction:column;gap:2px}
+.set-item{padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;color:var(--t2);cursor:pointer}
+.set-item.on{background:var(--blue-s);color:var(--blue)}
+.set-item:hover{background:var(--bg)}
+.set-block{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;margin-bottom:20px}
+.set-block h3{font-size:15px;font-weight:800;margin-bottom:18px}
+.set-field{margin-bottom:16px}
+.set-field label{display:block;font-size:12px;font-weight:700;color:var(--t2);margin-bottom:7px}
+.set-field input,.set-field select{width:100%;max-width:420px;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:'Inter',sans-serif;background:white}
+.set-field input:focus,.set-field select:focus{outline:none;border-color:var(--blue)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-t{font-size:13px;font-weight:700}
+.toggle-s{font-size:12px;color:var(--muted);margin-top:2px}
+.toggle{width:42px;height:24px;border-radius:99px;background:var(--border);position:relative;cursor:pointer;flex-shrink:0;transition:background .15s}
+.toggle.on{background:var(--blue)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:white;transition:transform .15s;box-shadow:0 1px 3px rgba(0,0,0,0.2)}
+.toggle.on::after{transform:translateX(18px)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sb-logo">K<em>O</em>I <small>ADMIN</small></div>
+    <div class="sb-divider"></div>
+    <div class="sb-nav">
+      <button class="sb-item on" data-view="dashboard" onclick="showView('dashboard',this)"><span class="sb-ic">◧</span>Dashboard</button>
+      <button class="sb-item" data-view="orders" onclick="showView('orders',this)"><span class="sb-ic">▤</span>Orders<span class="sb-badge">18</span></button>
+      <button class="sb-item" data-view="products" onclick="showView('products',this)"><span class="sb-ic">◫</span>Products</button>
+      <button class="sb-item" data-view="brands" onclick="showView('brands',this)"><span class="sb-ic">✦</span>Brands</button>
+      <button class="sb-item" data-view="customers" onclick="showView('customers',this)"><span class="sb-ic">◐</span>Customers</button>
+      <button class="sb-item" data-view="payouts" onclick="showView('payouts',this)"><span class="sb-ic">₦</span>Payouts</button>
+    </div>
+    <div class="sb-sec-lbl">System</div>
+    <div class="sb-nav">
+      <button class="sb-item" data-view="settings" onclick="showView('settings',this)"><span class="sb-ic">⚙</span>Settings</button>
+    </div>
+    <div class="sb-user">
+      <div class="sb-avatar">TA</div>
+      <div>
+        <div class="sb-uname">Tomiwa A.</div>
+        <div class="sb-urole">Super Admin</div>
+      </div>
+      <button class="sb-logout" onclick="window.location.href='admin-login.html'" title="Log out">⏻</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="tb-title" id="tb-title">Dashboard</div>
+      <div class="tb-search">🔍 <input placeholder="Search orders, products, brands, customers…"></div>
+      <div class="tb-right">
+        <button class="tb-icon-btn">🔔<span class="tb-dot"></span></button>
+        <button class="tb-icon-btn">✉️</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══ DASHBOARD ═══ -->
+      <div class="view on" id="v-dashboard">
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-top"><span class="kpi-lbl">Revenue (30d)</span><span class="kpi-ic">₦</span></div>
+            <div class="kpi-val">₦48.2M</div>
+            <div class="kpi-trend up">↑ 12.4% <span>vs last month</span></div>
+            <div class="spark"><i style="height:40%"></i><i style="height:55%"></i><i style="height:35%"></i><i style="height:70%"></i><i style="height:50%"></i><i style="height:85%"></i><i style="height:100%"></i></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top"><span class="kpi-lbl">Orders (30d)</span><span class="kpi-ic">▤</span></div>
+            <div class="kpi-val">1,284</div>
+            <div class="kpi-trend up">↑ 8.1% <span>vs last month</span></div>
+            <div class="spark"><i style="height:60%"></i><i style="height:40%"></i><i style="height:65%"></i><i style="height:45%"></i><i style="height:80%"></i><i style="height:60%"></i><i style="height:100%"></i></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top"><span class="kpi-lbl">Active Brands</span><span class="kpi-ic">✦</span></div>
+            <div class="kpi-val">512</div>
+            <div class="kpi-trend up">↑ 6 new <span>this month</span></div>
+            <div class="spark"><i style="height:70%"></i><i style="height:70%"></i><i style="height:75%"></i><i style="height:80%"></i><i style="height:85%"></i><i style="height:90%"></i><i style="height:100%"></i></div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-top"><span class="kpi-lbl">Delayed Shipments</span><span class="kpi-ic">⏱</span></div>
+            <div class="kpi-val">14</div>
+            <div class="kpi-trend down">↓ 3.2% <span>vs last month</span></div>
+            <div class="spark"><i style="height:90%"></i><i style="height:70%"></i><i style="height:60%"></i><i style="height:50%"></i><i style="height:40%"></i><i style="height:35%"></i><i style="height:30%"></i></div>
+          </div>
+        </div>
+
+        <div class="panel-row">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Revenue overview</div>
+                <div class="panel-sub">Naira revenue, last 7 weeks</div>
+              </div>
+              <button class="panel-link">Export →</button>
+            </div>
+            <div class="chart-bars">
+              <div class="chart-col"><div class="chart-bar" style="height:52%"></div><div class="chart-lbl">Wk 1</div></div>
+              <div class="chart-col"><div class="chart-bar" style="height:64%"></div><div class="chart-lbl">Wk 2</div></div>
+              <div class="chart-col"><div class="chart-bar" style="height:48%"></div><div class="chart-lbl">Wk 3</div></div>
+              <div class="chart-col"><div class="chart-bar" style="height:78%"></div><div class="chart-lbl">Wk 4</div></div>
+              <div class="chart-col"><div class="chart-bar" style="height:70%"></div><div class="chart-lbl">Wk 5</div></div>
+              <div class="chart-col"><div class="chart-bar" style="height:88%"></div><div class="chart-lbl">Wk 6</div></div>
+              <div class="chart-col"><div class="chart-bar" style="height:100%"></div><div class="chart-lbl">Wk 7</div></div>
+            </div>
+            <div class="legend-row">
+              <div class="legend-item"><span class="legend-dot" style="background:var(--blue)"></span>Gross revenue</div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <div class="panel-title">Sales by category</div>
+                <div class="panel-sub">Share of revenue</div>
+              </div>
+            </div>
+            <div class="split-list">
+              <div class="split-row"><span class="split-name">Fashion</span><div class="split-bar-bg"><div class="split-bar" style="width:38%"></div></div><span class="split-pct">38%</span></div>
+              <div class="split-row"><span class="split-name">Footwear</span><div class="split-bar-bg"><div class="split-bar" style="width:26%"></div></div><span class="split-pct">26%</span></div>
+              <div class="split-row"><span class="split-name">Beauty</span><div class="split-bar-bg"><div class="split-bar" style="width:19%"></div></div><span class="split-pct">19%</span></div>
+              <div class="split-row"><span class="split-name">Tech</span><div class="split-bar-bg"><div class="split-bar" style="width:11%"></div></div><span class="split-pct">11%</span></div>
+              <div class="split-row"><span class="split-name">Luxury</span><div class="split-bar-bg"><div class="split-bar" style="width:6%"></div></div><span class="split-pct">6%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Recent orders</div>
+              <div class="panel-sub">Latest activity across all brands</div>
+            </div>
+            <button class="panel-link" onclick="showView('orders')">View all →</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <tr><th>Order</th><th>Customer</th><th>Brand</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4821</td><td><div class="td-cust"><div class="td-avatar">CN</div><div>Chidinma N.</div></div></td><td>Nike</td><td>₦256,000</td><td><span class="pill processing"><i></i>Processing</span></td><td>Jul 14</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4820</td><td><div class="td-cust"><div class="td-avatar">TO</div><div>Tunde O.</div></div></td><td>Zara</td><td>₦89,600</td><td><span class="pill shipped"><i></i>Shipped</span></td><td>Jul 14</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4819</td><td><div class="td-cust"><div class="td-avatar">AB</div><div>Amaka B.</div></div></td><td>Sephora</td><td>₦104,000</td><td><span class="pill delivered"><i></i>Delivered</span></td><td>Jul 13</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4818</td><td><div class="td-cust"><div class="td-avatar">KJ</div><div>Kelechi J.</div></div></td><td>Gucci</td><td>₦1,280,000</td><td><span class="pill delayed"><i></i>Delayed</span></td><td>Jul 12</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4817</td><td><div class="td-cust"><div class="td-avatar">FE</div><div>Funmi E.</div></div></td><td>Apple</td><td>₦398,400</td><td><span class="pill shipped"><i></i>Shipped</span></td><td>Jul 12</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ORDERS ═══ -->
+      <div class="view" id="v-orders">
+        <div class="sec-head-row">
+          <div class="sec-head-l"><h2>Orders</h2><p>1,284 orders in the last 30 days</p></div>
+          <div class="filter-row">
+            <div class="filter-chip on">All</div>
+            <div class="filter-chip">Processing</div>
+            <div class="filter-chip">Shipped</div>
+            <div class="filter-chip">Delivered</div>
+            <div class="filter-chip">Delayed</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="table-wrap">
+            <table>
+              <tr><th>Order</th><th>Customer</th><th>Brand</th><th>Items</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4821</td><td><div class="td-cust"><div class="td-avatar">CN</div><div>Chidinma N.<div class="td-sub">Lagos, NG</div></div></div></td><td>Nike</td><td>1 item</td><td>₦256,000</td><td><span class="pill processing"><i></i>Processing</span></td><td>Jul 14</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4820</td><td><div class="td-cust"><div class="td-avatar">TO</div><div>Tunde O.<div class="td-sub">Abuja, NG</div></div></div></td><td>Zara</td><td>2 items</td><td>₦89,600</td><td><span class="pill shipped"><i></i>Shipped</span></td><td>Jul 14</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4819</td><td><div class="td-cust"><div class="td-avatar">AB</div><div>Amaka B.<div class="td-sub">Port Harcourt, NG</div></div></div></td><td>Sephora</td><td>3 items</td><td>₦104,000</td><td><span class="pill delivered"><i></i>Delivered</span></td><td>Jul 13</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4818</td><td><div class="td-cust"><div class="td-avatar">KJ</div><div>Kelechi J.<div class="td-sub">Lagos, NG</div></div></div></td><td>Gucci</td><td>1 item</td><td>₦1,280,000</td><td><span class="pill delayed"><i></i>Delayed</span></td><td>Jul 12</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4817</td><td><div class="td-cust"><div class="td-avatar">FE</div><div>Funmi E.<div class="td-sub">Ibadan, NG</div></div></div></td><td>Apple</td><td>1 item</td><td>₦398,400</td><td><span class="pill shipped"><i></i>Shipped</span></td><td>Jul 12</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4816</td><td><div class="td-cust"><div class="td-avatar">DO</div><div>David O.<div class="td-sub">Enugu, NG</div></div></div></td><td>Adidas</td><td>2 items</td><td>₦304,000</td><td><span class="pill delivered"><i></i>Delivered</span></td><td>Jul 11</td></tr>
+              <tr class="tbl-row"><td class="td-order">#KOI-4815</td><td><div class="td-cust"><div class="td-avatar">NG</div><div>Ngozi G.<div class="td-sub">Lagos, NG</div></div></div></td><td>H&amp;M</td><td>4 items</td><td>₦140,800</td><td><span class="pill processing"><i></i>Processing</span></td><td>Jul 11</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ PRODUCTS ═══ -->
+      <div class="view" id="v-products">
+        <div class="sec-head-row">
+          <div class="sec-head-l"><h2>Products</h2><p>Manage catalog across all brands</p></div>
+          <button class="btn-primary">+ Add Product</button>
+        </div>
+        <div class="admin-grid">
+          <div class="admin-card"><div class="ac-img"><img src="https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=600" onerror="this.style.display='none'"><span class="ac-status live">Live</span></div><div class="ac-body"><div class="ac-name">Air Max Pulse Sneakers</div><div class="ac-meta">Nike · Footwear</div><div class="ac-foot"><span class="ac-rev">₦256,000</span><span class="ac-dots">⋯</span></div></div></div>
+          <div class="admin-card"><div class="ac-img"><img src="https://images.pexels.com/photos/1055691/pexels-photo-1055691.jpeg?auto=compress&cs=tinysrgb&w=600" onerror="this.style.display='none'"><span class="ac-status live">Live</span></div><div class="ac-body"><div class="ac-name">Pleated Midi Dress</div><div class="ac-meta">Zara · Fashion</div><div class="ac-foot"><span class="ac-rev">₦89,600</span><span class="ac-dots">⋯</span></div></div></div>
+          <div class="admin-card"><div class="ac-img"><img src="https://images.pexels.com/photos/3373736/pexels-photo-3373736.jpeg?auto=compress&cs=tinysrgb&w=600" onerror="this.style.display='none'"><span class="ac-status live">Live</span></div><div class="ac-body"><div class="ac-name">Glow Skincare Set</div><div class="ac-meta">Sephora · Beauty</div><div class="ac-foot"><span class="ac-rev">₦104,000</span><span class="ac-dots">⋯</span></div></div></div>
+          <div class="admin-card"><div class="ac-img"><img src="https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg?auto=compress&cs=tinysrgb&w=600" onerror="this.style.display='none'"><span class="ac-status draft">Draft</span></div><div class="ac-body"><div class="ac-name">AirPods Pro 2nd Gen</div><div class="ac-meta">Apple · Tech</div><div class="ac-foot"><span class="ac-rev">₦398,400</span><span class="ac-dots">⋯</span></div></div></div>
+          <div class="admin-card"><div class="ac-img"><img src="https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg?auto=compress&cs=tinysrgb&w=600" onerror="this.style.display='none'"><span class="ac-status live">Live</span></div><div class="ac-body"><div class="ac-name">GG Canvas Tote Bag</div><div class="ac-meta">Gucci · Luxury</div><div class="ac-foot"><span class="ac-rev">₦1,280,000</span><span class="ac-dots">⋯</span></div></div></div>
+          <div class="admin-card"><div class="ac-img"><img src="https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg?auto=compress&cs=tinysrgb&w=600" onerror="this.style.display='none'"><span class="ac-status live">Live</span></div><div class="ac-body"><div class="ac-name">Ultraboost 23</div><div class="ac-meta">Adidas · Footwear</div><div class="ac-foot"><span class="ac-rev">₦304,000</span><span class="ac-dots">⋯</span></div></div></div>
+          <div class="admin-card"><div class="ac-img"><img src="https://images.pexels.com/photos/934070/pexels-photo-934070.jpeg?auto=compress&cs=tinysrgb&w=600" onerror="this.style.display='none'"><span class="ac-status draft">Draft</span></div><div class="ac-body"><div class="ac-name">Cotton Jersey Wrap Dress</div><div class="ac-meta">H&amp;M · Fashion</div><div class="ac-foot"><span class="ac-rev">₦35,200</span><span class="ac-dots">⋯</span></div></div></div>
+          <div class="admin-card"><div class="ac-img"><img src="https://images.pexels.com/photos/3373716/pexels-photo-3373716.jpeg?auto=compress&cs=tinysrgb&w=600" onerror="this.style.display='none'"><span class="ac-status live">Live</span></div><div class="ac-body"><div class="ac-name">Supersonic Hair Dryer</div><div class="ac-meta">Dyson · Home</div><div class="ac-foot"><span class="ac-rev">₦686,400</span><span class="ac-dots">⋯</span></div></div></div>
+        </div>
+      </div>
+
+      <!-- ═══ BRANDS ═══ -->
+      <div class="view" id="v-brands">
+        <div class="sec-head-row">
+          <div class="sec-head-l"><h2>Brands</h2><p>512 active brands on KOI</p></div>
+          <button class="btn-primary">+ Add Brand</button>
+        </div>
+        <div class="panel">
+          <div class="table-wrap">
+            <table>
+              <tr><th>Brand</th><th>Category</th><th>Products</th><th>30d Revenue</th><th>Status</th><th></th></tr>
+              <tr class="tbl-row"><td class="td-order">Nike</td><td>Footwear &amp; Apparel</td><td>2,400+</td><td>₦9.8M</td><td><span class="pill delivered"><i></i>Active</span></td><td class="ac-dots">⋯</td></tr>
+              <tr class="tbl-row"><td class="td-order">Zara</td><td>Fashion</td><td>1,800+</td><td>₦6.2M</td><td><span class="pill delivered"><i></i>Active</span></td><td class="ac-dots">⋯</td></tr>
+              <tr class="tbl-row"><td class="td-order">Sephora</td><td>Beauty</td><td>3,200+</td><td>₦7.4M</td><td><span class="pill delivered"><i></i>Active</span></td><td class="ac-dots">⋯</td></tr>
+              <tr class="tbl-row"><td class="td-order">Gucci</td><td>Luxury</td><td>890+</td><td>₦11.1M</td><td><span class="pill delivered"><i></i>Active</span></td><td class="ac-dots">⋯</td></tr>
+              <tr class="tbl-row"><td class="td-order">Apple</td><td>Technology</td><td>320+</td><td>₦5.6M</td><td><span class="pill processing"><i></i>Onboarding</span></td><td class="ac-dots">⋯</td></tr>
+              <tr class="tbl-row"><td class="td-order">Dyson</td><td>Tech &amp; Home</td><td>180+</td><td>₦2.9M</td><td><span class="pill delivered"><i></i>Active</span></td><td class="ac-dots">⋯</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ CUSTOMERS ═══ -->
+      <div class="view" id="v-customers">
+        <div class="sec-head-row">
+          <div class="sec-head-l"><h2>Customers</h2><p>28,410 registered customers</p></div>
+        </div>
+        <div class="panel">
+          <div class="table-wrap">
+            <table>
+              <tr><th>Customer</th><th>Location</th><th>Orders</th><th>Lifetime Value</th><th>Last order</th></tr>
+              <tr class="tbl-row"><td><div class="td-cust"><div class="td-avatar">CN</div><div>Chidinma N.</div></div></td><td>Lagos, NG</td><td>14</td><td>₦2.1M</td><td>Jul 14</td></tr>
+              <tr class="tbl-row"><td><div class="td-cust"><div class="td-avatar">TO</div><div>Tunde O.</div></div></td><td>Abuja, NG</td><td>6</td><td>₦480,000</td><td>Jul 14</td></tr>
+              <tr class="tbl-row"><td><div class="td-cust"><div class="td-avatar">AB</div><div>Amaka B.</div></div></td><td>Port Harcourt, NG</td><td>9</td><td>₦910,000</td><td>Jul 13</td></tr>
+              <tr class="tbl-row"><td><div class="td-cust"><div class="td-avatar">KJ</div><div>Kelechi J.</div></div></td><td>Lagos, NG</td><td>3</td><td>₦3.4M</td><td>Jul 12</td></tr>
+              <tr class="tbl-row"><td><div class="td-cust"><div class="td-avatar">FE</div><div>Funmi E.</div></div></td><td>Ibadan, NG</td><td>21</td><td>₦1.6M</td><td>Jul 12</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ PAYOUTS ═══ -->
+      <div class="view" id="v-payouts">
+        <div class="sec-head-row">
+          <div class="sec-head-l"><h2>Payouts</h2><p>Brand settlements &amp; finance overview</p></div>
+          <button class="btn-primary">Run Payout →</button>
+        </div>
+        <div class="payout-summary">
+          <div class="ps-card"><div class="ps-lbl">Pending payouts</div><div class="ps-val">₦18.4M</div><div class="ps-sub">Across 42 brands</div></div>
+          <div class="ps-card"><div class="ps-lbl">Paid this month</div><div class="ps-val">₦31.6M</div><div class="ps-sub">Settled to 512 brands</div></div>
+          <div class="ps-card"><div class="ps-lbl">KOI net margin</div><div class="ps-val">14.2%</div><div class="ps-sub">↑ 1.1pt vs last month</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Upcoming settlements</div></div>
+          <div class="table-wrap">
+            <table>
+              <tr><th>Brand</th><th>Orders</th><th>Gross</th><th>KOI fee</th><th>Payout</th><th>Status</th></tr>
+              <tr class="tbl-row"><td class="td-order">Nike</td><td>142</td><td>₦9.8M</td><td>₦1.4M</td><td>₦8.4M</td><td><span class="pill processing"><i></i>Pending</span></td></tr>
+              <tr class="tbl-row"><td class="td-order">Zara</td><td>98</td><td>₦6.2M</td><td>₦880K</td><td>₦5.3M</td><td><span class="pill processing"><i></i>Pending</span></td></tr>
+              <tr class="tbl-row"><td class="td-order">Sephora</td><td>210</td><td>₦7.4M</td><td>₦1.0M</td><td>₦6.4M</td><td><span class="pill delivered"><i></i>Paid</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SETTINGS ═══ -->
+      <div class="view" id="v-settings">
+        <div class="sec-head-row"><div class="sec-head-l"><h2>Settings</h2><p>Account &amp; platform configuration</p></div></div>
+        <div class="settings-grid">
+          <div class="set-nav">
+            <div class="set-item on">General</div>
+            <div class="set-item">Notifications</div>
+            <div class="set-item">Team &amp; Roles</div>
+            <div class="set-item">Payments</div>
+            <div class="set-item">API Keys</div>
+          </div>
+          <div>
+            <div class="set-block">
+              <h3>Store details</h3>
+              <div class="set-field"><label>Store name</label><input value="KOI Africa"></div>
+              <div class="set-field"><label>Support email</label><input value="hello@koiafrica.com"></div>
+              <div class="set-field"><label>Default currency</label><select><option>NGN — Nigerian Naira</option></select></div>
+            </div>
+            <div class="set-block">
+              <h3>Notifications</h3>
+              <div class="toggle-row"><div><div class="toggle-t">New order alerts</div><div class="toggle-s">Get notified instantly when an order is placed</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="toggle-row"><div><div class="toggle-t">Delayed shipment warnings</div><div class="toggle-s">Flag shipments overdue by 3+ days</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+              <div class="toggle-row"><div><div class="toggle-t">Weekly revenue digest</div><div class="toggle-s">Summary email every Monday</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+function showView(name,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+  document.getElementById('v-'+name).classList.add('on');
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('on'));
+  if(el)el.classList.add('on');
+  else document.querySelector('.sb-item[data-view="'+name+'"]').classList.add('on');
+  const titles={dashboard:'Dashboard',orders:'Orders',products:'Products',brands:'Brands',customers:'Customers',payouts:'Payouts',settings:'Settings'};
+  document.getElementById('tb-title').textContent=titles[name];
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('.filter-chip').forEach(c=>c.addEventListener('click',()=>{
+  c.parentElement.querySelectorAll('.filter-chip').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');
+}));
+document.querySelectorAll('.set-item').forEach(c=>c.addEventListener('click',()=>{
+  c.parentElement.querySelectorAll('.set-item').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');
+}));
+</script>
+</body>
+</html>

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import localFont from "next/font/local";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { CartProvider } from "@/lib/cart-context";
-import { CartDrawer } from "@/components/cart/CartDrawer";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -40,10 +38,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col bg-background font-sans text-text-primary"
       >
         <CartProvider>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <CartDrawer />
+          <SiteChrome>{children}</SiteChrome>
         </CartProvider>
       </body>
     </html>

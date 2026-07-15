@@ -6,10 +6,10 @@ Update this file after every completed feature.
 
 ## Current Status
 
-**Phase:** Phase 3 — Cart + Checkout + Orders
+**Phase:** Phase 4 — Admin
 **Business Model:** Chowdeck — customer pays FULL price in naira on KOI
-**Last completed:** Paystack full-payment checkout live and verified working in production (Vercel)
-**Next:** Build /track order-tracking page, then remove leftover self-report-model dead code, then Phase 4 (Admin)
+**Last completed:** 13 Admin auth + layout — /admin/login (InsForge session auth via proxy.ts), protected admin dashboard shell, sidebar, logout; login page matches context/designs/admin-login.html (premium split-screen with real KOI logo)
+**Next:** 14 Admin orders list + single order management — dashboard/sidebar visuals to follow context/designs/admin.html (dark navy sidebar, KPI cards, orders table)
 
 ---
 
@@ -32,14 +32,11 @@ Update this file after every completed feature.
 - [x] 10 Checkout — delivery details form + order summary
 - [x] 11 Paystack — full naira payment, server-side verify, create order in InsForge (confirmed working in production)
 - [x] 12a Order confirmation — /checkout/success verifies payment and shows order summary
-- [ ] 12b Order tracking page — /track does not exist yet; both success pages link to it ("Track Your Order") but it 404s
-- [ ] 12c Cleanup — remove dead code from the old self-report/pay-later-delivery-fee model, now superseded by full-payment Chowdeck flow:
-  - app/checkout/[reference]/page.tsx ("Pay delivery fee" flow)
-  - app/order/new/page.tsx
-  - app/api/orders/route.ts (stub, never wired to InsForge — TODO comment confirms it's unused)
+- [x] 12b Order tracking page — /track + POST /api/orders/track, looks up order by reference + email
+- [x] 12c Cleanup — removed dead code from the old self-report/pay-later-delivery-fee model (app/order/new, app/api/orders/route.ts, components/order/OrderForm.tsx)
 
 ### Phase 4 — Admin
-- [ ] 13 Admin auth + layout
+- [x] 13 Admin auth + layout — InsForge staff auth, proxy.ts route protection, /admin/login (matches design mockup), AdminSidebar, logout
 - [ ] 14 Admin orders list + single order management
 
 ### Phase 5 — Polish
@@ -61,9 +58,9 @@ Update this file after every completed feature.
 
 ## Open Decisions
 
-1. Delivery margin — how much does KOI add on top of the product naira price? (e.g. flat ₦15,000 or % based?) Confirm with boss before building checkout summary
-2. Nigerian states list — confirm if all 36 states + FCT or specific ones only
-3. koiafrica.com domain — connect to Vercel once boss provides domain registrar access
+1. Delivery margin — currently a placeholder (flat ₦10,000 + 5% of subtotal, see lib/pricing-config.ts). Confirm real number with boss.
+2. ~~Nigerian states list~~ — resolved: all 36 states + FCT implemented in lib/nigeria-states.ts.
+3. Domain — boss has purchased koiafrica.com; connect to Vercel (not blocking, can do anytime).
 
 ---
 
