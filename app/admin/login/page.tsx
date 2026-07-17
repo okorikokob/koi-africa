@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
         <div className="absolute inset-0 grid grid-cols-3 opacity-25">
           {BRAND_IMAGES.map((src) => (
             <div key={src} className="relative h-full w-full">
-              <Image src={src} alt="" fill className="object-cover object-top" />
+              <Image src={src} alt="" fill sizes="33vw" className="object-cover object-top" />
             </div>
           ))}
         </div>
@@ -54,6 +54,7 @@ export default function AdminLoginPage() {
                 src="/koi-logo.svg"
                 alt="KOI"
                 fill
+                sizes="70px"
                 className="object-contain object-left brightness-0 invert"
                 priority
               />
@@ -94,7 +95,7 @@ export default function AdminLoginPage() {
             aria-label="KOI home"
           >
             <div className="relative h-7 w-[62px]">
-              <Image src="/koi-logo.svg" alt="KOI" fill className="object-contain object-left" />
+              <Image src="/koi-logo.svg" alt="KOI" fill sizes="62px" className="object-contain object-left" />
             </div>
             <span className="text-xs font-bold tracking-[0.2em] text-text-muted">
               ADMIN

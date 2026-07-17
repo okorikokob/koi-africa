@@ -12,8 +12,8 @@ export default async function AdminDashboardLayout({
 
   return (
     <div className="flex min-h-svh bg-background">
-      <AdminSidebar />
-      <main className="flex-1 px-8 py-8">{children}</main>
+      <AdminSidebar name={user.profile?.name ?? ""} email={user.email ?? ""} />
+      <div className="min-w-0 flex-1">{children}</div>
     </div>
   );
 }
