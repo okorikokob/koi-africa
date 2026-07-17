@@ -64,7 +64,7 @@ export function ProductCard({ product }: Props) {
             e.preventDefault();
             setWished((w) => !w);
           }}
-          className={`absolute right-2 top-2 z-10 flex h-[30px] w-[30px] items-center justify-center rounded-full bg-surface shadow-sm transition-transform active:scale-125 md:right-3 md:top-3 md:h-[38px] md:w-[38px] ${
+          className={`absolute right-2 top-2 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-surface shadow-sm transition-transform active:scale-125 md:right-3 md:top-3 md:h-[38px] md:w-[38px] ${
             wished ? "text-error" : "text-text-muted"
           }`}
         >

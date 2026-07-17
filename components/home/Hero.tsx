@@ -42,7 +42,13 @@ export function Hero() {
       <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-0.5 opacity-[0.55] md:grid-cols-4 md:grid-rows-1 md:opacity-[0.6]">
         {BG_IMAGES.map((src) => (
           <div key={src} className="relative h-full w-full">
-            <Image src={src} alt="" fill className="object-cover object-top" />
+            <Image
+              src={src}
+              alt=""
+              fill
+              sizes="(min-width: 768px) 25vw, 50vw"
+              className="object-cover object-top"
+            />
           </div>
         ))}
       </div>

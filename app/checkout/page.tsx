@@ -86,7 +86,7 @@ export default function CheckoutPage() {
               <div key={item.id} className="flex items-center gap-3">
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-secondary">
                   {item.image && (
-                    <Image src={item.image} alt={item.title} fill className="object-cover" />
+                    <Image src={item.image} alt={item.title} fill sizes="48px" className="object-cover" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1">

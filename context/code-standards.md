@@ -266,5 +266,6 @@ Approved dependencies:
 - `lucide-react` — icons
 - `tailwindcss` — styling
 - `shadcn/ui` components — UI primitives
+- `recharts` — admin dashboard charts (bar/pie); no native or shadcn primitive covers this
 
 Paystack and the affiliate API are called over HTTP via `fetch` in their `lib/` files — no SDK needed unless a clear reason appears. Do not add other packages without updating this list first.

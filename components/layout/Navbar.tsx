@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Brands", href: "/brands" },
   { label: "How it works", href: "/#how-it-works" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export function Navbar() {
@@ -112,7 +113,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 h-[60px] w-full border-b border-border bg-background/96 backdrop-blur-xl md:h-[76px]">
       <div className="mx-auto flex h-full max-w-[1680px] items-center justify-between px-5 md:px-8">
         <Link href="/" className="relative h-8 w-[70px] shrink-0 md:h-9 md:w-[80px]" aria-label="KOI home">
-          <Image src="/koi-logo.svg" alt="KOI" fill className="object-contain object-left" priority />
+          <Image src="/koi-logo.svg" alt="KOI" fill sizes="80px" className="object-contain object-left" priority />
         </Link>
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-9 md:flex">

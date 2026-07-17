@@ -6,10 +6,10 @@ Update this file after every completed feature.
 
 ## Current Status
 
-**Phase:** Phase 3 — Cart + Checkout + Orders
+**Phase:** Phase 4 — Admin
 **Business Model:** Chowdeck — customer pays FULL price in naira on KOI
-**Last completed:** Paystack full-payment checkout live and verified working in production (Vercel)
-**Next:** Build /track order-tracking page, then remove leftover self-report-model dead code, then Phase 4 (Admin)
+**Last completed:** 15 Company pages — /about, /faq (accordion), /contact (working form via actions/contact.ts + InsForge emails.send — currently blocked, see Open Decisions), /returns (marked pending on logistics partner decision), /privacy + /terms (draft copy, flagged "pending legal review", not lawyer-reviewed)
+**Next:** 16 Polish pass (Phase 5, final item)
 
 ---
 
@@ -32,18 +32,15 @@ Update this file after every completed feature.
 - [x] 10 Checkout — delivery details form + order summary
 - [x] 11 Paystack — full naira payment, server-side verify, create order in InsForge (confirmed working in production)
 - [x] 12a Order confirmation — /checkout/success verifies payment and shows order summary
-- [ ] 12b Order tracking page — /track does not exist yet; both success pages link to it ("Track Your Order") but it 404s
-- [ ] 12c Cleanup — remove dead code from the old self-report/pay-later-delivery-fee model, now superseded by full-payment Chowdeck flow:
-  - app/checkout/[reference]/page.tsx ("Pay delivery fee" flow)
-  - app/order/new/page.tsx
-  - app/api/orders/route.ts (stub, never wired to InsForge — TODO comment confirms it's unused)
+- [x] 12b Order tracking page — /track + POST /api/orders/track, looks up order by reference + email
+- [x] 12c Cleanup — removed dead code from the old self-report/pay-later-delivery-fee model (app/order/new, app/api/orders/route.ts, components/order/OrderForm.tsx)
 
 ### Phase 4 — Admin
-- [ ] 13 Admin auth + layout
-- [ ] 14 Admin orders list + single order management
+- [x] 13 Admin auth + layout — InsForge staff auth, proxy.ts route protection, /admin/login (matches design mockup), AdminSidebar, logout
+- [x] 14 Admin orders list + single order management
 
 ### Phase 5 — Polish
-- [ ] 15 Company pages
+- [x] 15 Company pages
 - [ ] 16 Polish pass
 
 ---
@@ -61,9 +58,13 @@ Update this file after every completed feature.
 
 ## Open Decisions
 
-1. Delivery margin — how much does KOI add on top of the product naira price? (e.g. flat ₦15,000 or % based?) Confirm with boss before building checkout summary
-2. Nigerian states list — confirm if all 36 states + FCT or specific ones only
-3. koiafrica.com domain — connect to Vercel once boss provides domain registrar access
+1. Delivery margin — currently a placeholder (flat ₦10,000 + 5% of subtotal, see lib/pricing-config.ts). Confirm real number with boss.
+2. ~~Nigerian states list~~ — resolved: all 36 states + FCT implemented in lib/nigeria-states.ts.
+3. Domain — boss has purchased koiafrica.com; connect to Vercel (not blocking, can do anytime).
+4. Returns policy — depends on which logistics partners KOI signs with; /returns page currently says "pending" rather than stating a policy.
+5. Contact form email — actions/contact.ts calls InsForge's emails.send(), which requires a paid InsForge plan (current plan returned "Custom email service is not available for free plan"). Form validates and submits correctly but the message never actually sends until either the plan is upgraded or the action is changed to store submissions in the DB instead. Left as-is per instruction.
+6. Privacy Policy and Terms & Conditions pages are draft boilerplate (clearly labeled "pending legal review" on both pages) — not reviewed by a lawyer, should be confirmed/rewritten before being relied on.
+7. Contact page WhatsApp number (+234 000 000 0000) and address (Maitama, Abuja) are placeholders — same placeholders already used in Footer.tsx — swap in the real ones when available.
 
 ---
 

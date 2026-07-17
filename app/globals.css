@@ -74,3 +74,11 @@
 .animate-marquee {
   animation: marquee 30s linear infinite;
 }
+
+/* Visible keyboard-focus ring site-wide — covers icon buttons, nav links, and
+   any interactive element that doesn't set its own focus style. */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
