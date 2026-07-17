@@ -8,8 +8,8 @@ Update this file after every completed feature.
 
 **Phase:** Phase 4 — Admin
 **Business Model:** Chowdeck — customer pays FULL price in naira on KOI
-**Last completed:** 13 Admin auth + layout — /admin/login (InsForge session auth via proxy.ts), protected admin dashboard shell, sidebar, logout; login page matches context/designs/admin-login.html (premium split-screen with real KOI logo)
-**Next:** 14 Admin orders list + single order management — dashboard/sidebar visuals to follow context/designs/admin.html (dark navy sidebar, KPI cards, orders table)
+**Last completed:** 15 Company pages — /about, /faq (accordion), /contact (working form via actions/contact.ts + InsForge emails.send — currently blocked, see Open Decisions), /returns (marked pending on logistics partner decision), /privacy + /terms (draft copy, flagged "pending legal review", not lawyer-reviewed)
+**Next:** 16 Polish pass (Phase 5, final item)
 
 ---
 
@@ -37,10 +37,10 @@ Update this file after every completed feature.
 
 ### Phase 4 — Admin
 - [x] 13 Admin auth + layout — InsForge staff auth, proxy.ts route protection, /admin/login (matches design mockup), AdminSidebar, logout
-- [ ] 14 Admin orders list + single order management
+- [x] 14 Admin orders list + single order management
 
 ### Phase 5 — Polish
-- [ ] 15 Company pages
+- [x] 15 Company pages
 - [ ] 16 Polish pass
 
 ---
@@ -61,6 +61,10 @@ Update this file after every completed feature.
 1. Delivery margin — currently a placeholder (flat ₦10,000 + 5% of subtotal, see lib/pricing-config.ts). Confirm real number with boss.
 2. ~~Nigerian states list~~ — resolved: all 36 states + FCT implemented in lib/nigeria-states.ts.
 3. Domain — boss has purchased koiafrica.com; connect to Vercel (not blocking, can do anytime).
+4. Returns policy — depends on which logistics partners KOI signs with; /returns page currently says "pending" rather than stating a policy.
+5. Contact form email — actions/contact.ts calls InsForge's emails.send(), which requires a paid InsForge plan (current plan returned "Custom email service is not available for free plan"). Form validates and submits correctly but the message never actually sends until either the plan is upgraded or the action is changed to store submissions in the DB instead. Left as-is per instruction.
+6. Privacy Policy and Terms & Conditions pages are draft boilerplate (clearly labeled "pending legal review" on both pages) — not reviewed by a lawyer, should be confirmed/rewritten before being relied on.
+7. Contact page WhatsApp number (+234 000 000 0000) and address (Maitama, Abuja) are placeholders — same placeholders already used in Footer.tsx — swap in the real ones when available.
 
 ---
 

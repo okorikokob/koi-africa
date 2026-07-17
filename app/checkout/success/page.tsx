@@ -94,7 +94,7 @@ function CheckoutSuccessContent() {
                   <div key={i} className="flex items-center gap-3">
                     <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-secondary">
                       {item.image && (
-                        <Image src={item.image} alt={item.title} fill className="object-cover" />
+                        <Image src={item.image} alt={item.title} fill sizes="48px" className="object-cover" />
                       )}
                     </div>
                     <p className="min-w-0 flex-1 truncate font-sans text-sm font-semibold text-text-primary">

@@ -22,7 +22,7 @@ export function PromoBanner() {
             }}
           />
           <div className="absolute bottom-0 right-0 hidden h-full w-[42%] md:block md:w-[48%]">
-            <Image src="/assets/bags.jpg" alt="" fill className="object-cover object-top" />
+            <Image src="/assets/bags.jpg" alt="" fill sizes="48vw" className="object-cover object-top" />
             <div
               className="absolute bottom-0 left-0 top-0 w-[60px]"
               style={{ background: "linear-gradient(to right, transparent, var(--color-primary-hover))" }}

@@ -20,6 +20,7 @@ export default async function BrandsPage() {
             src={heroImage}
             alt=""
             fill
+            sizes="100vw"
             className="object-cover object-center opacity-[0.18]"
             priority
           />

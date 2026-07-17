@@ -27,6 +27,7 @@ export default async function BrandPage({ params }: Props) {
             src={heroImage}
             alt=""
             fill
+            sizes="100vw"
             className="object-cover object-center saturate-[1.2] contrast-[1.05]"
             priority
           />

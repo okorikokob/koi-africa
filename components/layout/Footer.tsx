@@ -60,7 +60,7 @@ export function Footer() {
     <footer className="bg-ink px-5 pb-9 pt-11 md:px-16 md:pb-11 md:pt-[72px]">
       <div className="mx-auto max-w-[1680px]">
         <div className="relative mb-2.5 h-8 w-[72px] md:h-9 md:w-[82px]">
-          <Image src="/koi-logo-light.svg" alt="KOI" fill className="object-contain object-left" />
+          <Image src="/koi-logo-light.svg" alt="KOI" fill sizes="82px" className="object-contain object-left" />
         </div>
         <p className="mb-7 max-w-xs font-sans text-[13px] leading-[1.65] text-white/40 md:mb-8 md:max-w-sm">
           Your gateway to global shopping. Browse hundreds of international brands and pay in
