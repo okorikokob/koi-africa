@@ -80,7 +80,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   return (
     <>
       <AdminTopbar title={`Orders / ${row.reference}`} />
-      <div className="px-9 py-8">
+      <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-9">
       <Link
         href="/admin/orders"
         className="inline-flex items-center gap-1.5 font-sans text-sm font-medium text-text-secondary hover:text-text-primary"
@@ -108,7 +108,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          <div className="rounded-card border border-border bg-surface p-6.5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-4.5 shadow-sm sm:p-6.5">
             <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-text-muted">
               Items
             </h2>
@@ -156,7 +156,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             </div>
           </div>
 
-          <div className="rounded-card border border-border bg-surface p-6.5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-4.5 shadow-sm sm:p-6.5">
             <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-text-muted">
               Delivery address
             </h2>
@@ -169,7 +169,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             </p>
           </div>
 
-          <div className="rounded-card border border-border bg-surface p-6.5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-4.5 shadow-sm sm:p-6.5">
             <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-text-muted">
               Internal notes
             </h2>
@@ -183,7 +183,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="rounded-card border border-border bg-surface p-6.5 shadow-sm">
+          <div className="rounded-card border border-border bg-surface p-4.5 shadow-sm sm:p-6.5">
             <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-text-muted">
               Customer
             </h2>
@@ -205,7 +205,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             )}
           </div>
 
-          <div className="rounded-card border border-primary/25 bg-primary-soft/50 p-6.5 shadow-sm">
+          <div className="rounded-card border border-primary/25 bg-primary-soft/50 p-4.5 shadow-sm sm:p-6.5">
             <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-primary">
               Update status
             </h2>

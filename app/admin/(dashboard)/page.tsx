@@ -144,8 +144,8 @@ export default async function AdminDashboardPage() {
   return (
     <>
       <AdminTopbar title="Dashboard" />
-      <div className="px-9 py-8">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-9">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 xl:grid-cols-4">
           <KpiCard
             label="Revenue (30d)"
             value={formatNaira(revenue30)}
@@ -212,7 +212,7 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="mt-6 rounded-card border border-border bg-surface p-6.5 shadow-sm">
+        <div className="mt-6 rounded-card border border-border bg-surface p-4.5 shadow-sm sm:p-6.5">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <p className="font-display text-base font-extrabold text-text-primary">
@@ -227,7 +227,41 @@ export default async function AdminDashboardPage() {
               View all →
             </Link>
           </div>
-          <div className="overflow-x-auto">
+
+          <div className="flex flex-col divide-y divide-border sm:hidden">
+            {recentOrders.map((o) => (
+              <Link
+                key={o.id}
+                href={`/admin/orders/${o.id}`}
+                className="flex items-center gap-3 py-3.5 first:pt-0 last:pb-0"
+              >
+                <div
+                  className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-sans text-[11px] font-extrabold ${avatarClass(o.customer_name)}`}
+                >
+                  {initials(o.customer_name)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-sans text-sm font-extrabold text-text-primary">
+                    {o.reference}
+                  </p>
+                  <p className="truncate font-sans text-xs text-text-muted">{o.customer_name}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="font-sans text-sm font-semibold text-text-primary">
+                    {formatNaira(o.total_naira)}
+                  </p>
+                  <div className="mt-1">
+                    <OrderStatusBadge status={o.status} />
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {recentOrders.length === 0 && (
+              <p className="py-10 text-center font-sans text-sm text-text-muted">No orders yet.</p>
+            )}
+          </div>
+
+          <div className="hidden overflow-x-auto sm:block">
             <table className="w-full border-collapse">
               <thead>
                 <tr>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAdminUser } from "@/lib/insforge-auth";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminMobileNavProvider } from "@/components/admin/AdminMobileNavProvider";
 
 export default async function AdminDashboardLayout({
   children,
@@ -11,9 +12,11 @@ export default async function AdminDashboardLayout({
   if (!user) redirect("/admin/login");
 
   return (
-    <div className="flex min-h-svh bg-background">
-      <AdminSidebar name={user.profile?.name ?? ""} email={user.email ?? ""} />
-      <div className="min-w-0 flex-1">{children}</div>
-    </div>
+    <AdminMobileNavProvider>
+      <div className="flex min-h-svh bg-background">
+        <AdminSidebar name={user.profile?.name ?? ""} email={user.email ?? ""} />
+        <div className="min-w-0 flex-1">{children}</div>
+      </div>
+    </AdminMobileNavProvider>
   );
 }

@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -9,8 +11,10 @@ import {
   Banknote,
   Settings,
   Power,
+  X,
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth";
+import { useAdminMobileNav } from "@/components/admin/AdminMobileNavProvider";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -30,6 +34,7 @@ type Props = {
 };
 
 export function AdminSidebar({ name, email }: Props) {
+  const { open, setOpen } = useAdminMobileNav();
   const displayName = name || email.split("@")[0] || "Admin";
   const initials = displayName
     .split(" ")
@@ -39,15 +44,37 @@ export function AdminSidebar({ name, email }: Props) {
     .join("");
 
   return (
-    <aside className="sticky top-0 flex h-svh w-64 shrink-0 flex-col bg-ink px-4.5 py-6.5 text-white">
-      <Link href="/admin" className="flex items-center gap-2 px-2.5 pb-2">
-        <div className="relative h-8 w-[72px]">
-          <Image src="/koi-logo-light.svg" alt="KOI" fill sizes="72px" className="object-contain object-left" />
-        </div>
-        <span className="font-sans text-[10px] font-bold tracking-[0.2em] text-white/35">
-          ADMIN
-        </span>
-      </Link>
+    <>
+      {open && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex h-svh w-64 shrink-0 -translate-x-full flex-col bg-ink px-4.5 py-6.5 text-white transition-transform duration-200 ease-out lg:sticky lg:top-0 lg:translate-x-0 ${
+          open ? "translate-x-0" : ""
+        }`}
+      >
+      <div className="flex items-center justify-between px-2.5 pb-2">
+        <Link href="/admin" className="flex items-center gap-2" onClick={() => setOpen(false)}>
+          <div className="relative h-8 w-[72px]">
+            <Image src="/koi-logo-light.svg" alt="KOI" fill sizes="72px" className="object-contain object-left" />
+          </div>
+          <span className="font-sans text-[10px] font-bold tracking-[0.2em] text-white/35">
+            ADMIN
+          </span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="text-white/50 hover:text-white lg:hidden"
+          aria-label="Close menu"
+        >
+          <X className="h-5 w-5" strokeWidth={1.75} />
+        </button>
+      </div>
       <div className="mx-2.5 my-4.5 h-px bg-white/10" />
 
       <nav className="flex flex-col gap-0.5">
@@ -55,6 +82,7 @@ export function AdminSidebar({ name, email }: Props) {
           <Link
             key={href}
             href={href}
+            onClick={() => setOpen(false)}
             className="flex items-center gap-3 rounded-[11px] px-3 py-2.5 font-sans text-sm font-semibold text-white/60 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white"
           >
             <Icon className="h-4 w-4 shrink-0" strokeWidth={1.75} />
@@ -104,6 +132,7 @@ export function AdminSidebar({ name, email }: Props) {
           </button>
         </form>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

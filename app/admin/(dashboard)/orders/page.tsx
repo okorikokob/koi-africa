@@ -60,14 +60,14 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
   return (
     <>
       <AdminTopbar title="Orders">
-        <form className="flex items-center gap-2" action="/admin/orders">
+        <form className="flex w-full items-center gap-2 sm:w-auto" action="/admin/orders">
           {status && <input type="hidden" name="status" value={status} />}
           <input
             type="text"
             name="q"
             defaultValue={q ?? ""}
             placeholder="Search reference or email…"
-            className="w-64 max-w-full rounded-button border border-border bg-surface px-4 py-2.5 font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="w-full min-w-0 rounded-button border border-border bg-surface px-4 py-2.5 font-sans text-sm text-text-primary placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 sm:w-64"
           />
           <button
             type="submit"
@@ -78,7 +78,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
         </form>
       </AdminTopbar>
 
-      <div className="px-9 py-8">
+      <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-9">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="font-sans text-sm text-text-muted">
             {orders.length} order{orders.length === 1 ? "" : "s"}
@@ -107,7 +107,51 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-card border border-border bg-surface p-6.5 shadow-sm">
+        <div className="flex flex-col divide-y divide-border rounded-card border border-border bg-surface px-4.5 lg:hidden">
+          {orders.map((order) => (
+            <Link
+              key={order.id}
+              href={`/admin/orders/${order.id}`}
+              className="flex items-start gap-3 py-4"
+            >
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-sans text-[11px] font-extrabold ${avatarClass(order.customer_name)}`}
+              >
+                {initials(order.customer_name)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate font-sans text-sm font-extrabold text-text-primary">
+                    {order.reference}
+                  </p>
+                  <p className="shrink-0 font-sans text-sm font-semibold text-text-primary">
+                    {formatNaira(order.total_naira)}
+                  </p>
+                </div>
+                <p className="truncate font-sans text-xs text-text-muted">
+                  {order.customer_name} · {order.customer_email}
+                </p>
+                <p className="mt-0.5 font-sans text-xs text-text-muted">
+                  {order.delivery_city}, {order.delivery_state}
+                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <OrderStatusBadge status={order.status} />
+                  <p className="font-sans text-xs text-text-secondary">
+                    {new Date(order.created_at).toLocaleDateString("en-NG", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </p>
+                </div>
+              </div>
+            </Link>
+          ))}
+          {orders.length === 0 && (
+            <p className="py-10 text-center font-sans text-sm text-text-muted">No orders found.</p>
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto rounded-card border border-border bg-surface p-6.5 shadow-sm lg:block">
           <table className="w-full border-collapse">
             <thead>
               <tr>
