@@ -64,7 +64,7 @@ Update this file after every completed feature.
 4. Returns policy — depends on which logistics partners KOI signs with; /returns page currently says "pending" rather than stating a policy.
 5. Contact form email — actions/contact.ts calls InsForge's emails.send(), which requires a paid InsForge plan (current plan returned "Custom email service is not available for free plan"). Form validates and submits correctly but the message never actually sends until either the plan is upgraded or the action is changed to store submissions in the DB instead. Left as-is per instruction.
 6. Privacy Policy and Terms & Conditions pages are draft boilerplate (clearly labeled "pending legal review" on both pages) — not reviewed by a lawyer, should be confirmed/rewritten before being relied on.
-7. Contact page WhatsApp number (+234 000 000 0000) and address (Maitama, Abuja) are placeholders — same placeholders already used in Footer.tsx — swap in the real ones when available.
+7. Contact page WhatsApp number (+234 000 000 0000) is still a placeholder — swap in the real one when available. Address (Maitama, Abuja) confirmed real, no change needed.
 
 ---
 
