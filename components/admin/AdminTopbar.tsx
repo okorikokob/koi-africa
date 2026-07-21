@@ -1,8 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Menu } from "lucide-react";
+import { Menu, Sun, Moon } from "lucide-react";
 import { useAdminMobileNav } from "@/components/admin/AdminMobileNavProvider";
+import { useAdminTheme } from "@/components/admin/AdminThemeProvider";
 
 type Props = {
   title: string;
@@ -11,6 +12,7 @@ type Props = {
 
 export function AdminTopbar({ title, children }: Props) {
   const { toggle } = useAdminMobileNav();
+  const { theme, toggle: toggleTheme } = useAdminTheme();
 
   return (
     <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-4 backdrop-blur-md sm:gap-5 sm:px-6 sm:py-4.5 lg:px-9">
@@ -27,7 +29,22 @@ export function AdminTopbar({ title, children }: Props) {
           {title}
         </h1>
       </div>
-      {children}
+      <div className="flex flex-1 flex-wrap items-center justify-end gap-3 sm:flex-none">
+        {children}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          className="shrink-0 rounded-button border border-border bg-surface p-2.5 text-text-secondary transition-colors hover:bg-surface-secondary"
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {theme === "dark" ? (
+            <Sun className="h-4 w-4" strokeWidth={1.75} />
+          ) : (
+            <Moon className="h-4 w-4" strokeWidth={1.75} />
+          )}
+        </button>
+      </div>
     </div>
   );
 }

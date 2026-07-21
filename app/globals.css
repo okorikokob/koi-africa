@@ -62,6 +62,18 @@
   --motion-page: 350ms;
 }
 
+/* Admin dark mode — scoped override, does not affect the public storefront. */
+.admin-dark {
+  --color-background: #101012;
+  --color-surface: #17171a;
+  --color-surface-secondary: #201f23;
+  --color-border: #2c2b30;
+  --color-text-primary: #f2f2f0;
+  --color-text-secondary: #a8a7a3;
+  --color-text-muted: #777672;
+  --color-primary-soft: rgba(0, 74, 173, 0.18);
+}
+
 @keyframes marquee {
   from {
     transform: translateX(0);
