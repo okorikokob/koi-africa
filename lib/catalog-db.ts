@@ -107,7 +107,7 @@ export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
 
 export async function getProductById(id: string): Promise<Product | null> {
   const catalogProduct = await getCatalogV2ProductById(id);
-  if (catalogProduct) return catalogProduct;
+  if (catalogProduct) return null;
 
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
@@ -117,6 +117,12 @@ export async function getProductById(id: string): Promise<Product | null> {
     .maybeSingle();
   if (error || !data) return null;
   return rowToKoi(data as ProductRow);
+}
+
+export async function getCatalogProductById(id: string): Promise<Product | null> {
+  const catalogProduct = await getCatalogV2ProductById(id);
+  if (catalogProduct) return catalogProduct;
+  return getProductById(id);
 }
 
 export async function getRelatedProducts(

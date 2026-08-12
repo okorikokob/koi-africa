@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { getProductById, getRelatedProductsForTitle } from "@/lib/catalog-db";
+import { getCatalogProductById, getRelatedProductsForTitle } from "@/lib/catalog-db";
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { Reveal } from "@/components/motion/Reveal";
@@ -13,7 +13,7 @@ type Props = {
 export default async function ProductDetailPage({ params }: Props) {
   const { id } = await params;
 
-  const product = await getProductById(id);
+  const product = await getCatalogProductById(id);
   if (!product) notFound();
 
   const related = await getRelatedProductsForTitle(product.title, product.category, product.id, 4);
