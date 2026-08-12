@@ -1,5 +1,10 @@
 import { createInsforgeServer } from "@/lib/insforge-server";
 import { rowToKoi, type ProductRow } from "@/lib/product-db";
+import {
+  getCatalogV2ProductById,
+  getCatalogV2Products,
+  getCatalogV2ProductsByBrand,
+} from "@/lib/catalog-v2-db";
 import type { Brand, Product } from "@/types";
 
 export type ProductListResult = {
@@ -18,6 +23,15 @@ export async function getProducts({
   page = 1,
   pageSize = 24,
 }: ProductListOptions = {}): Promise<ProductListResult> {
+  const catalogProducts = await getCatalogV2Products();
+  if (catalogProducts.length > 0) {
+    const filtered = categories.length > 0
+      ? catalogProducts.filter((product) => categories.includes(product.category))
+      : catalogProducts;
+    const from = (page - 1) * pageSize;
+    return { products: filtered.slice(from, from + pageSize), total: filtered.length };
+  }
+
   const insforge = createInsforgeServer();
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
@@ -39,6 +53,14 @@ export async function getProducts({
 }
 
 export async function searchProducts(searchTerm: string, limit = 40): Promise<Product[]> {
+  const catalogProducts = await getCatalogV2Products();
+  if (catalogProducts.length > 0) {
+    const term = searchTerm.toLowerCase();
+    return catalogProducts
+      .filter((product) => product.title.toLowerCase().includes(term) || product.brandName.toLowerCase().includes(term))
+      .slice(0, limit);
+  }
+
   const insforge = createInsforgeServer();
   const term = searchTerm.replace(/[(),.]/g, " ").replace(/[%_]/g, "\\$&");
   const { data, error } = await insforge.database
@@ -51,6 +73,11 @@ export async function searchProducts(searchTerm: string, limit = 40): Promise<Pr
 }
 
 export async function getCategoryFacets(): Promise<string[]> {
+  const catalogProducts = await getCatalogV2Products();
+  if (catalogProducts.length > 0) {
+    return [...new Set(catalogProducts.map((product) => product.category))].sort();
+  }
+
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -65,6 +92,9 @@ export async function getCategoryFacets(): Promise<string[]> {
 }
 
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
+  const catalogProducts = await getCatalogV2Products();
+  if (catalogProducts.length > 0) return catalogProducts.slice(0, limit);
+
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -76,6 +106,9 @@ export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
+  const catalogProduct = await getCatalogV2ProductById(id);
+  if (catalogProduct) return catalogProduct;
+
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -91,6 +124,13 @@ export async function getRelatedProducts(
   excludeId: string,
   limit = 4,
 ): Promise<Product[]> {
+  const catalogProducts = await getCatalogV2Products();
+  if (catalogProducts.length > 0) {
+    return catalogProducts
+      .filter((product) => product.category === category && product.id !== excludeId)
+      .slice(0, limit);
+  }
+
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -112,6 +152,9 @@ export async function getRelatedProductsForTitle(
 }
 
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
+  const catalogProducts = await getCatalogV2ProductsByBrand(brandName);
+  if (catalogProducts.length > 0) return catalogProducts;
+
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")

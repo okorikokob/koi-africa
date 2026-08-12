@@ -5,8 +5,7 @@ import Image from "next/image";
 import { Star, ChevronDown, Ruler, Minus, Plus } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatNaira, toNaira } from "@/lib/currency";
-import type { Product } from "@/types";
-import type { ProductVariant } from "@/lib/shopify-catalog";
+import type { Product, ProductVariant } from "@/types";
 
 type Props = {
   product: Product;
@@ -206,6 +205,9 @@ export function ProductInfo({ product, onColorChange }: Props) {
       <h1 className="font-display text-3xl font-bold leading-tight text-text-primary md:text-4xl">
         {product.title}
       </h1>
+      {product.subtitle && (
+        <p className="-mt-3 font-sans text-base text-text-secondary">{product.subtitle}</p>
+      )}
 
       {/* Star rating — shown directly under title if available */}
       {product.rating !== undefined && (
