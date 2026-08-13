@@ -30,7 +30,9 @@ export const apifyNikeProductRecordSchema = z.object({
   originalPrice: z.number().nonnegative().nullable(),
   currency: z.string().length(3),
   images: z.array(imageSchema).min(1).max(100),
-  variants: z.array(variantSchema).max(500),
+  // Nike can legitimately expose hundreds of colour/size combinations (534 observed).
+  // Keep a conservative finite ceiling to reject unexpectedly unbounded payloads.
+  variants: z.array(variantSchema).max(600),
   availability: z.enum(["in_stock", "limited", "out_of_stock"]),
 }).superRefine((record, context) => {
   const hosts = new Set(record.images.map((image) => new URL(image.url).hostname));

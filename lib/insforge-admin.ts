@@ -21,6 +21,14 @@ async function request<T>(path: string, init: RequestInit): Promise<T> {
   return (await response.json()) as T;
 }
 
+export async function getCatalogRows<T>(
+  table: string,
+  query: Record<string, string>,
+): Promise<T[]> {
+  const search = new URLSearchParams(query);
+  return request<T[]>(`/api/database/records/${table}?${search.toString()}`, { method: "GET" });
+}
+
 export async function upsertCatalogRow<T extends { id: string }>(
   table: string,
   onConflict: string,
