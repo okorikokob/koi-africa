@@ -1,8 +1,7 @@
 // Boundary between the InsForge `products` table (snake_case rows) and the
 // app-facing `Product` type (camelCase). Nothing else should know the row shape.
 
-import type { Product } from "@/types";
-import type { ProductVariant } from "@/lib/shopify-catalog";
+import type { Product, ProductVariant } from "@/types";
 
 // Row shape as returned by the InsForge SDK for the `products` table.
 export type ProductRow = {

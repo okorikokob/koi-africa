@@ -2,7 +2,7 @@
 // Only works for Shopify storefronts (which is everything in our catalog).
 // Called server-side from the product detail page — no CORS issues.
 
-import type { ProductVariant } from "@/lib/shopify-catalog";
+import type { ProductVariant } from "@/types";
 
 type ShopifyJsVariant = {
   id: number;

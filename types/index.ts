@@ -1,4 +1,13 @@
-import type { ProductVariant } from "@/lib/shopify-catalog";
+export type ProductVariant = {
+  id: string;
+  checkoutUrl: string;
+  productUrl: string;
+  available: boolean;
+  price: number;
+  currency: string;
+  options: Array<{ name: string; label: string }>;
+  imageUrl: string;
+};
 
 export type Brand = {
   id: string;
@@ -13,6 +22,7 @@ export type Brand = {
 export type Product = {
   id: string;
   title: string;
+  subtitle?: string;
   brandName: string;
   category: string;
   imageUrl: string;
@@ -32,6 +42,7 @@ export type Product = {
   options?: Array<{ name: string; values: string[] }>;
   tag?: "new" | "bestseller";
   source?: "UK" | "US";
+  available?: boolean;
 };
 
 export type CategoryTile = {

@@ -1,6 +1,12 @@
 import { getApifyDatasetItems } from "@/lib/apify-client";
 import { apifyNikeProductRecordSchema } from "@/lib/catalog-ingestion-schema";
-import { callCatalogRpc, insertCatalogRow, updateCatalogRow, upsertCatalogRow } from "@/lib/insforge-admin";
+import {
+  callCatalogRpc,
+  getCatalogRows,
+  insertCatalogRow,
+  updateCatalogRow,
+  upsertCatalogRow,
+} from "@/lib/insforge-admin";
 import { mapNikeProductRecord } from "@/lib/nike-catalog-mapper";
 
 const NIKE_US = {
@@ -13,7 +19,6 @@ const NIKE_US = {
     currency: "USD",
     official_base_url: "https://www.nike.com/us",
   },
-  actorId: "koi-universal-scraper",
 } as const;
 
 type IngestionResult = {
@@ -22,10 +27,15 @@ type IngestionResult = {
   productsUpserted: number;
   imagesUpserted: number;
   variantsUpserted: number;
+  productsCoalesced: number;
   errors: number;
 };
 
 type IdRow = { id: string };
+type ExistingProductRow = {
+  source_product_id: string;
+  style_code: string | null;
+};
 
 function message(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -40,12 +50,16 @@ async function ensureNikeUsStorefront(): Promise<string> {
   return storefront.id;
 }
 
-export async function ingestNikeDataset(datasetId: string): Promise<IngestionResult> {
+export async function ingestNikeDataset(
+  datasetId: string,
+  source: { actorId: string; runId: string },
+): Promise<IngestionResult> {
   const storefrontId = await ensureNikeUsStorefront();
   const syncRun = await insertCatalogRow<IdRow>("catalog_sync_runs", {
       storefront_id: storefrontId,
       provider: "apify",
-      actor_id: NIKE_US.actorId,
+      actor_id: source.actorId,
+      provider_run_id: source.runId,
       dataset_id: datasetId,
       authoritative: false,
       status: "running",
@@ -54,7 +68,9 @@ export async function ingestNikeDataset(datasetId: string): Promise<IngestionRes
   let productsUpserted = 0;
   let imagesUpserted = 0;
   let variantsUpserted = 0;
+  let productsCoalesced = 0;
   let errors = 0;
+  const seenCanonicalProducts = new Set<string>();
 
   try {
     const records = await getApifyDatasetItems(datasetId);
@@ -73,6 +89,34 @@ export async function ingestNikeDataset(datasetId: string): Promise<IngestionRes
 
       try {
         const normalized = mapNikeProductRecord(parsed.data);
+        const canonicalIdentity = `${parsed.data.canonicalUrl}\u0000${parsed.data.styleCode ?? ""}`;
+        if (seenCanonicalProducts.has(canonicalIdentity)) {
+          productsCoalesced += 1;
+          continue;
+        }
+
+        const existingCanonicalProducts = await getCatalogRows<ExistingProductRow>("catalog_products", {
+          storefront_id: `eq.${storefrontId}`,
+          canonical_url: `eq.${parsed.data.canonicalUrl}`,
+          select: "source_product_id,style_code",
+          limit: "1",
+        });
+        const existingCanonicalProduct = existingCanonicalProducts[0];
+        if (
+          existingCanonicalProduct
+          && existingCanonicalProduct.source_product_id !== normalized.sourceProductId
+        ) {
+          const sameStyleIdentity = Boolean(
+            parsed.data.styleCode
+            && existingCanonicalProduct.style_code
+            && parsed.data.styleCode === existingCanonicalProduct.style_code,
+          );
+          if (!sameStyleIdentity) {
+            throw new Error("Canonical URL belongs to a different established product identity.");
+          }
+          normalized.sourceProductId = existingCanonicalProduct.source_product_id;
+        }
+
         await callCatalogRpc("catalog_ingest_product", {
           p_storefront_id: storefrontId,
           p_provider: "apify",
@@ -84,6 +128,7 @@ export async function ingestNikeDataset(datasetId: string): Promise<IngestionRes
         productsUpserted += 1;
         imagesUpserted += normalized.images.length;
         variantsUpserted += normalized.variants.length;
+        seenCanonicalProducts.add(canonicalIdentity);
       } catch (error) {
         errors += 1;
         await insertCatalogRow("catalog_sync_errors", {
@@ -107,7 +152,15 @@ export async function ingestNikeDataset(datasetId: string): Promise<IngestionRes
       error_count: errors,
     });
 
-    return { syncRunId, received: records.length, productsUpserted, imagesUpserted, variantsUpserted, errors };
+    return {
+      syncRunId,
+      received: records.length,
+      productsUpserted,
+      imagesUpserted,
+      variantsUpserted,
+      productsCoalesced,
+      errors,
+    };
   } catch (error) {
     await updateCatalogRow("catalog_sync_runs", syncRunId, {
       status: "failed",

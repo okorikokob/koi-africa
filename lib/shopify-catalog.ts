@@ -2,18 +2,11 @@
 // All Shopify Global Catalog API knowledge lives here.
 // Pages and routes import only the exported functions — never the raw API shape.
 
+import type { ProductVariant } from "@/types";
+
 const SHOPIFY_MCP_URL = "https://catalog.shopify.com/api/ucp/mcp";
 
-export type ProductVariant = {
-  id: string;
-  checkoutUrl: string;
-  productUrl: string;   // vendor product page URL with ?variant=ID (shows the right color)
-  available: boolean;
-  price: number;
-  currency: string;
-  options: Array<{ name: string; label: string }>;
-  imageUrl: string;
-};
+export type { ProductVariant } from "@/types";
 
 export type ShopifyProduct = {
   id: string;
