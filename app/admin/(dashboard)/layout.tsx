@@ -4,6 +4,8 @@ import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AdminMobileNavProvider } from "@/components/admin/AdminMobileNavProvider";
 import { AdminThemeProvider } from "@/components/admin/AdminThemeProvider";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboardLayout({
   children,
 }: {
