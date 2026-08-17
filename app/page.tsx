@@ -7,6 +7,8 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { Reveal } from "@/components/motion/Reveal";
 import { getFeaturedProducts, getBrandSummaries } from "@/lib/catalog-db";
+
+export const dynamic = "force-dynamic";
 import { FEATURED_PRODUCTS, FEATURED_BRANDS } from "@/lib/mock-data";
 import Link from "next/link";
 

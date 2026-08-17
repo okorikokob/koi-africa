@@ -5,6 +5,8 @@ import { AllBrandsGrid } from "@/components/catalog/AllBrandsGrid";
 import { getBrandSummaries } from "@/lib/catalog-db";
 import { FEATURED_BRANDS } from "@/lib/mock-data";
 
+export const dynamic = "force-dynamic";
+
 export default async function BrandsPage() {
   const summaries = await getBrandSummaries(FEATURED_BRANDS);
   const heroImage = summaries.find((s) => s.imageUrl)?.imageUrl;
