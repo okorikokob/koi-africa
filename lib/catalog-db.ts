@@ -6,7 +6,7 @@ import {
   getCatalogV2ProductsByBrand,
 } from "@/lib/catalog-v2-db";
 import type { Brand, Product } from "@/types";
-import { getLocalNikeProductById, getLocalNikeProducts } from "@/lib/local-nike-catalog";
+import { getLocalCatalogProductById, getLocalCatalogProducts } from "@/lib/local-catalog";
 
 export type ProductListResult = {
   products: Product[];
@@ -25,7 +25,7 @@ export async function getProducts({
   pageSize = 24,
 }: ProductListOptions = {}): Promise<ProductListResult> {
   const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalNikeProducts();
+  const localNikeProducts = getLocalCatalogProducts();
   const insforge = createInsforgeServer();
   let query = insforge.database
     .from("products")
@@ -47,7 +47,7 @@ export async function getProducts({
 
 export async function searchProducts(searchTerm: string, limit = 40): Promise<Product[]> {
   const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalNikeProducts();
+  const localNikeProducts = getLocalCatalogProducts();
   const insforge = createInsforgeServer();
   const term = searchTerm.replace(/[(),.]/g, " ").replace(/[%_]/g, "\\$&");
   const { data, error } = await insforge.database
@@ -63,7 +63,7 @@ export async function searchProducts(searchTerm: string, limit = 40): Promise<Pr
 
 export async function getCategoryFacets(): Promise<string[]> {
   const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalNikeProducts();
+  const localNikeProducts = getLocalCatalogProducts();
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -78,7 +78,7 @@ export async function getCategoryFacets(): Promise<string[]> {
 
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalNikeProducts();
+  const localNikeProducts = getLocalCatalogProducts();
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -90,7 +90,7 @@ export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
-  const localProduct = getLocalNikeProductById(id);
+  const localProduct = getLocalCatalogProductById(id);
   if (localProduct) return localProduct;
   const catalogProduct = await getCatalogV2ProductById(id);
   if (catalogProduct) return catalogProduct;
@@ -106,7 +106,7 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 export async function getCatalogProductById(id: string): Promise<Product | null> {
-  const localProduct = getLocalNikeProductById(id);
+  const localProduct = getLocalCatalogProductById(id);
   if (localProduct) return localProduct;
   const catalogProduct = await getCatalogV2ProductById(id);
   if (catalogProduct) return catalogProduct;
@@ -118,8 +118,13 @@ export async function getRelatedProducts(
   excludeId: string,
   limit = 4,
 ): Promise<Product[]> {
+  const localNikeProducts = getLocalCatalogProducts();
+  if (excludeId.startsWith("local-")) {
+    return localNikeProducts
+      .filter((product) => product.category === category && product.id !== excludeId)
+      .slice(0, limit);
+  }
   const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalNikeProducts();
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -144,8 +149,10 @@ export async function getRelatedProductsForTitle(
 }
 
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
+  const localProducts = getLocalCatalogProducts().filter((product) => product.brandName.toLowerCase() === brandName.toLowerCase());
+  if (brandName.toLowerCase() === "h&m" && localProducts.length > 0) return localProducts;
+
   const catalogProducts = await getCatalogV2ProductsByBrand(brandName);
-  const localProducts = getLocalNikeProducts().filter((product) => product.brandName.toLowerCase() === brandName.toLowerCase());
 
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database

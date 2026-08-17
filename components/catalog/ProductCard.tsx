@@ -120,8 +120,9 @@ export function ProductCard({ product }: Props) {
           </div>
           <button
             type="button"
+            disabled={product.available === false}
             onClick={(e) => {
-              if (product.options?.length) return;
+              if (product.options?.length || product.available === false) return;
               e.preventDefault();
               addItem({
                 productId: product.id,
@@ -131,9 +132,9 @@ export function ProductCard({ product }: Props) {
                 priceNaira,
               });
             }}
-            className="flex-shrink-0 whitespace-nowrap rounded-lg bg-primary-soft px-2.5 py-1.5 text-[11px] font-extrabold text-primary transition-colors duration-150 hover:bg-primary hover:text-white active:scale-95 md:rounded-[10px] md:px-4 md:py-[9px] md:text-xs"
+            className="flex-shrink-0 whitespace-nowrap rounded-lg bg-primary-soft px-2.5 py-1.5 text-[11px] font-extrabold text-primary transition-colors duration-150 hover:bg-primary hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 md:rounded-[10px] md:px-4 md:py-[9px] md:text-xs"
           >
-            {product.options?.length ? "Select" : "+ Add"}
+            {product.available === false ? "Sold out" : product.options?.length ? "Select" : "+ Add"}
           </button>
         </div>
       </div>

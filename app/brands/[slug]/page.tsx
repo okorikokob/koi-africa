@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { FEATURED_BRANDS } from "@/lib/mock-data";
+import { getLocalCatalogBrands } from "@/lib/local-catalog";
 import { getBrandCatalog } from "@/lib/catalog-db";
 import { BrandProductsSection } from "@/components/catalog/BrandProductsSection";
 
@@ -12,7 +13,7 @@ type Props = {
 
 export default async function BrandPage({ params }: Props) {
   const { slug } = await params;
-  const brand = FEATURED_BRANDS.find((b) => b.slug === slug);
+  const brand = [...FEATURED_BRANDS, ...getLocalCatalogBrands()].find((b) => b.slug === slug);
 
   if (!brand) notFound();
 

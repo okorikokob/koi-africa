@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/brightdata-nike-normalizer.test.ts tests/local-nike-catalog.test.ts",
+    "test": "tsx --test tests/brightdata-nike-normalizer.test.ts tests/brightdata-hm-normalizer.test.ts tests/local-nike-catalog.test.ts tests/local-hm-catalog.test.ts",
+    "catalog:hm:dry-run": "tsx scripts/normalize-brightdata-hm.ts",
     "catalog:nike:dry-run": "tsx scripts/normalize-brightdata-nike.ts",
     "catalog:nike:import": "tsx scripts/import-brightdata-nike.ts"
   },
