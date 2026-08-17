@@ -34,9 +34,20 @@ export async function POST(req: NextRequest) {
     }
 
     const pricedItems = products.map((product, i) => {
-      const priceNaira = toNaira(product!.priceAmount, product!.priceCurrency);
+      const requestedVariantId = input.items[i].variantId;
+      const variant = requestedVariantId
+        ? product!.variants?.find((candidate) => candidate.id === requestedVariantId)
+        : undefined;
+      if (requestedVariantId && (!variant || !variant.available)) {
+        throw new Error(`Selected variant is no longer available for ${product!.title}.`);
+      }
+      const priceNaira = toNaira(variant?.price ?? product!.priceAmount, variant?.currency ?? product!.priceCurrency);
       return {
         productId: product!.id,
+        variantId: variant?.id ?? null,
+        sku: variant?.sku ?? null,
+        gtin: variant?.gtin ?? null,
+        selectedOptions: variant?.options.map((option) => ({ name: option.name, value: option.label })) ?? [],
         title: product!.title,
         vendorName: product!.vendorName,
         vendorUrl: product!.vendorUrl,
@@ -74,8 +85,8 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("[api/payments/initialize]", error);
     return NextResponse.json(
-      { success: false, error: "Something went wrong. Please try again." },
-      { status: 500 },
+      { success: false, error: error instanceof Error ? error.message : "Something went wrong. Please try again." },
+      { status: error instanceof Error && error.message.includes("variant") ? 400 : 500 },
     );
   }
 }

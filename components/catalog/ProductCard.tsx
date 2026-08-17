@@ -121,9 +121,10 @@ export function ProductCard({ product }: Props) {
           <button
             type="button"
             onClick={(e) => {
+              if (product.options?.length) return;
               e.preventDefault();
               addItem({
-                id: product.id,
+                productId: product.id,
                 title: product.title,
                 brandName: product.brandName,
                 image: product.imageUrl,
@@ -132,7 +133,7 @@ export function ProductCard({ product }: Props) {
             }}
             className="flex-shrink-0 whitespace-nowrap rounded-lg bg-primary-soft px-2.5 py-1.5 text-[11px] font-extrabold text-primary transition-colors duration-150 hover:bg-primary hover:text-white active:scale-95 md:rounded-[10px] md:px-4 md:py-[9px] md:text-xs"
           >
-            + Add
+            {product.options?.length ? "Select" : "+ Add"}
           </button>
         </div>
       </div>

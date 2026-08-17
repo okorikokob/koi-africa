@@ -24,6 +24,8 @@ export function Navbar() {
   const { count, openCart } = useCart();
 
   useEffect(() => {
+    // Portals require document, which is unavailable during the server render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 

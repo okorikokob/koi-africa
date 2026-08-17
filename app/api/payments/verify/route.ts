@@ -15,6 +15,10 @@ type OrderMetadata = {
   landmark?: string;
   items: Array<{
     productId: string;
+    variantId: string | null;
+    sku: string | null;
+    gtin: string | null;
+    selectedOptions: Array<{ name: string; value: string }>;
     title: string;
     vendorName: string;
     vendorUrl: string;
@@ -162,6 +166,10 @@ export async function POST(req: NextRequest) {
     const orderItemRows = metadata.items.map((item) => ({
       order_id: orderId,
       product_id: item.productId,
+      variant_id: item.variantId,
+      sku: item.sku,
+      gtin: item.gtin,
+      selected_options: item.selectedOptions,
       title: item.title,
       vendor_name: item.vendorName,
       vendor_url: item.vendorUrl,

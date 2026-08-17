@@ -11,6 +11,7 @@ type CatalogVariantRow = {
   id: string;
   source_variant_id: string;
   sku: string | null;
+  gtin: string | null;
   color_name: string | null;
   size_label: string | null;
   currency: string;
@@ -18,6 +19,8 @@ type CatalogVariantRow = {
   sale_price_minor: number | string | null;
   available: boolean;
   is_active: boolean;
+  option_values: Record<string, string> | null;
+  availability_status: "in_stock" | "pre_order" | "out_of_stock";
 };
 
 type CatalogProductRow = {
@@ -31,6 +34,9 @@ type CatalogProductRow = {
   price_minor: number | string;
   sale_price_minor: number | string | null;
   available: boolean;
+  availability_status: "in_stock" | "pre_order" | "out_of_stock";
+  rating: number | string | null;
+  review_count: number;
   catalog_storefronts: {
     country_code: string;
     catalog_brands: { name: string; slug: string };
@@ -51,22 +57,32 @@ function unique(values: Array<string | null>): string[] {
 function rowToProduct(row: CatalogProductRow): Product {
   const images = [...row.catalog_product_images].sort((a, b) => a.position - b.position);
   const activeVariants = row.catalog_product_variants.filter((variant) => variant.is_active);
-  const colours = unique(activeVariants.map((variant) => variant.color_name));
-  const sizes = unique(activeVariants.map((variant) => variant.size_label));
   const productPrice = minorToMajor(row.sale_price_minor ?? row.price_minor);
+  const colorImageSets: Record<string, string[]> = {};
+  for (const image of images) {
+    if (!image.color_name) continue;
+    colorImageSets[image.color_name] = [...(colorImageSets[image.color_name] ?? []), image.official_cdn_url];
+  }
+  const colorImages = Object.fromEntries(Object.entries(colorImageSets).map(([color, urls]) => [color, urls[0]]));
   const variants: ProductVariant[] = activeVariants.map((variant) => ({
     id: variant.source_variant_id,
+    sku: variant.sku ?? undefined,
+    gtin: variant.gtin ?? undefined,
     checkoutUrl: row.canonical_url,
     productUrl: row.canonical_url,
     available: variant.available,
+    availabilityStatus: variant.availability_status,
     price: minorToMajor(variant.sale_price_minor ?? variant.price_minor) || productPrice,
     currency: variant.currency,
-    options: [
-      ...(variant.color_name ? [{ name: "Colour", label: variant.color_name }] : []),
-      ...(variant.size_label ? [{ name: "Size", label: variant.size_label }] : []),
-    ],
+    options: Object.keys(variant.option_values ?? {}).length
+      ? Object.entries(variant.option_values!).map(([name, label]) => ({ name, label }))
+      : [
+          ...(variant.color_name ? [{ name: "Colour", label: variant.color_name }] : []),
+          ...(variant.size_label ? [{ name: "Size", label: variant.size_label }] : []),
+        ],
     imageUrl: images[0]?.official_cdn_url ?? "",
   }));
+  const optionNames = unique(variants.flatMap((variant) => variant.options.map((option) => option.name)));
 
   return {
     id: row.id,
@@ -76,6 +92,8 @@ function rowToProduct(row: CatalogProductRow): Product {
     category: row.product_type ?? "catalogue",
     imageUrl: images[0]?.official_cdn_url ?? "",
     allImages: images.map((image) => image.official_cdn_url),
+    colorImages,
+    colorImageSets,
     priceAmount: productPrice,
     priceCurrency: row.currency,
     vendorName: row.catalog_storefronts.catalog_brands.name,
@@ -84,20 +102,23 @@ function rowToProduct(row: CatalogProductRow): Product {
     description: row.description ?? undefined,
     isFeatured: false,
     available: row.available,
+    availabilityStatus: row.availability_status,
+    rating: row.rating == null ? undefined : Number(row.rating),
+    reviewCount: row.review_count,
     variants,
-    options: [
-      ...(colours.length ? [{ name: "Colour", values: colours }] : []),
-      ...(sizes.length ? [{ name: "Size", values: sizes }] : []),
-    ],
+    options: optionNames.map((name) => ({
+      name,
+      values: unique(variants.flatMap((variant) => variant.options.filter((option) => option.name === name).map((option) => option.label))),
+    })),
     source: row.catalog_storefronts.country_code === "UK" ? "UK" : "US",
   };
 }
 
 const CATALOG_SELECT = `
-  id,title,subtitle,description,product_type,canonical_url,currency,price_minor,sale_price_minor,available,
+  id,title,subtitle,description,product_type,canonical_url,currency,price_minor,sale_price_minor,available,availability_status,rating,review_count,
   catalog_storefronts!inner(country_code,catalog_brands!inner(name,slug)),
   catalog_product_images(official_cdn_url,position,color_name),
-  catalog_product_variants(id,source_variant_id,sku,color_name,size_label,currency,price_minor,sale_price_minor,available,is_active)
+  catalog_product_variants(id,source_variant_id,sku,gtin,color_name,size_label,currency,price_minor,sale_price_minor,available,is_active,option_values,availability_status)
 `;
 
 async function runCatalogQuery(): Promise<Product[]> {

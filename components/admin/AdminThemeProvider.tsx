@@ -17,6 +17,8 @@ export function AdminThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY);
+    // Hydrate the persisted client-only preference after the server render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored === "dark" || stored === "light") setTheme(stored);
   }, []);
 

@@ -3,7 +3,12 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type CartItem = {
-  id: string;
+  cartKey: string;
+  productId: string;
+  variantId?: string;
+  sku?: string;
+  gtin?: string;
+  selectedOptions?: Array<{ name: string; value: string }>;
   title: string;
   brandName: string;
   image: string;
@@ -16,9 +21,9 @@ type CartContextValue = {
   isOpen: boolean;
   totalNaira: number;
   count: number;
-  addItem: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  removeItem: (id: string) => void;
-  setQty: (id: string, qty: number) => void;
+  addItem: (item: Omit<CartItem, "qty" | "cartKey">, qty?: number) => void;
+  removeItem: (cartKey: string) => void;
+  setQty: (cartKey: string, qty: number) => void;
   clearCart: () => void;
   openCart: () => void;
   closeCart: () => void;
@@ -35,7 +40,16 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setItems(JSON.parse(raw));
+      if (raw) {
+        const parsed = JSON.parse(raw) as Array<CartItem & { id?: string }>;
+        // Cart storage exists only in the browser and must hydrate after mount.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setItems(parsed.map((item) => ({
+          ...item,
+          productId: item.productId ?? item.id ?? "",
+          cartKey: item.cartKey ?? item.variantId ?? item.productId ?? item.id ?? "",
+        })).filter((item) => item.productId && item.cartKey));
+      }
     } catch {
       // ignore malformed/unavailable storage
     }
@@ -47,26 +61,27 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hydrated]);
 
-  const addItem = useCallback((item: Omit<CartItem, "qty">, qty = 1) => {
+  const addItem = useCallback((item: Omit<CartItem, "qty" | "cartKey">, qty = 1) => {
+    const cartKey = item.variantId ? `${item.productId}:${item.variantId}` : item.productId;
     setItems((current) => {
-      const existing = current.find((i) => i.id === item.id);
+      const existing = current.find((i) => i.cartKey === cartKey);
       if (existing) {
-        return current.map((i) => (i.id === item.id ? { ...i, qty: i.qty + qty } : i));
+        return current.map((i) => (i.cartKey === cartKey ? { ...i, qty: i.qty + qty } : i));
       }
-      return [...current, { ...item, qty }];
+      return [...current, { ...item, cartKey, qty }];
     });
     setIsOpen(true);
   }, []);
 
-  const removeItem = useCallback((id: string) => {
-    setItems((current) => current.filter((i) => i.id !== id));
+  const removeItem = useCallback((cartKey: string) => {
+    setItems((current) => current.filter((i) => i.cartKey !== cartKey));
   }, []);
 
-  const setQty = useCallback((id: string, qty: number) => {
+  const setQty = useCallback((cartKey: string, qty: number) => {
     setItems((current) =>
       qty <= 0
-        ? current.filter((i) => i.id !== id)
-        : current.map((i) => (i.id === id ? { ...i, qty } : i)),
+        ? current.filter((i) => i.cartKey !== cartKey)
+        : current.map((i) => (i.cartKey === cartKey ? { ...i, qty } : i)),
     );
   }, []);
 

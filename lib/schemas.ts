@@ -20,6 +20,7 @@ export const initializePaymentSchema = checkoutFormSchema.extend({
     .array(
       z.object({
         productId: z.string().min(1),
+        variantId: z.string().min(1).optional(),
         qty: z.number().int().positive(),
       }),
     )

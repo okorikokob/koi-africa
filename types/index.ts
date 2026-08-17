@@ -1,8 +1,11 @@
 export type ProductVariant = {
   id: string;
+  sku?: string;
+  gtin?: string;
   checkoutUrl: string;
   productUrl: string;
   available: boolean;
+  availabilityStatus?: "in_stock" | "pre_order" | "out_of_stock";
   price: number;
   currency: string;
   options: Array<{ name: string; label: string }>;
@@ -43,6 +46,7 @@ export type Product = {
   tag?: "new" | "bestseller";
   source?: "UK" | "US";
   available?: boolean;
+  availabilityStatus?: "in_stock" | "pre_order" | "out_of_stock";
 };
 
 export type CategoryTile = {

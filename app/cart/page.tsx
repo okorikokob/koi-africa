@@ -43,7 +43,7 @@ export default function CartPage() {
         <div className="flex flex-col">
           {items.map((item) => (
             <div
-              key={item.id}
+              key={item.cartKey}
               className="flex flex-wrap items-center gap-x-4 gap-y-3 border-b border-border py-5 first:pt-0 sm:flex-nowrap"
             >
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-surface-secondary">
@@ -54,6 +54,11 @@ export default function CartPage() {
 
               <div className="min-w-[140px] flex-1">
                 <p className="font-sans text-sm font-bold text-text-primary">{item.title}</p>
+                {item.selectedOptions?.length ? (
+                  <p className="mt-1 font-sans text-xs text-text-secondary">
+                    {item.selectedOptions.map((option) => `${option.name}: ${option.value}`).join(" · ")}
+                  </p>
+                ) : null}
                 <p className="mt-1 font-sans text-sm font-bold text-text-primary">
                   {formatNaira(item.priceNaira)}
                 </p>
@@ -63,7 +68,7 @@ export default function CartPage() {
                 <button
                   type="button"
                   aria-label="Decrease quantity"
-                  onClick={() => setQty(item.id, item.qty - 1)}
+                  onClick={() => setQty(item.cartKey, item.qty - 1)}
                   className="flex h-9 w-9 items-center justify-center text-text-primary transition-colors hover:bg-surface-secondary"
                 >
                   <Minus className="h-3.5 w-3.5" />
@@ -74,7 +79,7 @@ export default function CartPage() {
                 <button
                   type="button"
                   aria-label="Increase quantity"
-                  onClick={() => setQty(item.id, item.qty + 1)}
+                  onClick={() => setQty(item.cartKey, item.qty + 1)}
                   className="flex h-9 w-9 items-center justify-center text-text-primary transition-colors hover:bg-surface-secondary"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -87,7 +92,7 @@ export default function CartPage() {
 
               <button
                 type="button"
-                onClick={() => removeItem(item.id)}
+                onClick={() => removeItem(item.cartKey)}
                 aria-label="Remove item"
                 className="shrink-0 p-1 text-text-muted transition-colors hover:text-error"
               >

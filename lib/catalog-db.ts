@@ -6,6 +6,7 @@ import {
   getCatalogV2ProductsByBrand,
 } from "@/lib/catalog-v2-db";
 import type { Brand, Product } from "@/types";
+import { getLocalNikeProductById, getLocalNikeProducts } from "@/lib/local-nike-catalog";
 
 export type ProductListResult = {
   products: Product[];
@@ -24,43 +25,29 @@ export async function getProducts({
   pageSize = 24,
 }: ProductListOptions = {}): Promise<ProductListResult> {
   const catalogProducts = await getCatalogV2Products();
-  if (catalogProducts.length > 0) {
-    const filtered = categories.length > 0
-      ? catalogProducts.filter((product) => categories.includes(product.category))
-      : catalogProducts;
-    const from = (page - 1) * pageSize;
-    return { products: filtered.slice(from, from + pageSize), total: filtered.length };
-  }
-
+  const localNikeProducts = getLocalNikeProducts();
   const insforge = createInsforgeServer();
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-
   let query = insforge.database
     .from("products")
-    .select("*", { count: "exact" })
+    .select("*")
     .order("is_featured", { ascending: false })
-    .order("synced_at", { ascending: false })
-    .range(from, to);
+    .order("synced_at", { ascending: false });
 
   if (categories.length > 0) {
     query = query.in("category", categories);
   }
 
-  const { data, error, count } = await query;
-  if (error || !data) return { products: [], total: 0 };
-  return { products: (data as ProductRow[]).map(rowToKoi), total: count ?? data.length };
+  const { data } = await query;
+  const legacyProducts = (data as ProductRow[] | null)?.map(rowToKoi) ?? [];
+  const merged = [...localNikeProducts, ...catalogProducts, ...legacyProducts];
+  const filtered = categories.length > 0 ? merged.filter((product) => categories.includes(product.category)) : merged;
+  const from = (page - 1) * pageSize;
+  return { products: filtered.slice(from, from + pageSize), total: filtered.length };
 }
 
 export async function searchProducts(searchTerm: string, limit = 40): Promise<Product[]> {
   const catalogProducts = await getCatalogV2Products();
-  if (catalogProducts.length > 0) {
-    const term = searchTerm.toLowerCase();
-    return catalogProducts
-      .filter((product) => product.title.toLowerCase().includes(term) || product.brandName.toLowerCase().includes(term))
-      .slice(0, limit);
-  }
-
+  const localNikeProducts = getLocalNikeProducts();
   const insforge = createInsforgeServer();
   const term = searchTerm.replace(/[(),.]/g, " ").replace(/[%_]/g, "\\$&");
   const { data, error } = await insforge.database
@@ -68,46 +55,45 @@ export async function searchProducts(searchTerm: string, limit = 40): Promise<Pr
     .select("*")
     .or(`title.ilike.%${term}%,brand_name.ilike.%${term}%`)
     .limit(limit);
-  if (error || !data) return [];
-  return (data as ProductRow[]).map(rowToKoi);
+  const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
+  const normalizedTerm = searchTerm.toLowerCase();
+  const localAndV2 = [...localNikeProducts, ...catalogProducts].filter((product) => product.title.toLowerCase().includes(normalizedTerm) || product.brandName.toLowerCase().includes(normalizedTerm));
+  return [...localAndV2, ...legacy].slice(0, limit);
 }
 
 export async function getCategoryFacets(): Promise<string[]> {
   const catalogProducts = await getCatalogV2Products();
-  if (catalogProducts.length > 0) {
-    return [...new Set(catalogProducts.map((product) => product.category))].sort();
-  }
-
+  const localNikeProducts = getLocalNikeProducts();
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
     .select("category");
-  if (error || !data) return [];
-  const set = new Set(
+  const set = new Set([...localNikeProducts, ...catalogProducts].map((product) => product.category));
+  if (!error && data) for (const category of
     (data as Array<{ category: string | null }>)
       .map((row) => row.category)
-      .filter((category): category is string => Boolean(category)),
-  );
+      .filter((category): category is string => Boolean(category))) set.add(category);
   return Array.from(set).sort();
 }
 
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
   const catalogProducts = await getCatalogV2Products();
-  if (catalogProducts.length > 0) return catalogProducts.slice(0, limit);
-
+  const localNikeProducts = getLocalNikeProducts();
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
     .select("*")
     .eq("is_featured", true)
     .limit(limit);
-  if (error || !data) return [];
-  return (data as ProductRow[]).map(rowToKoi);
+  const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
+  return [...catalogProducts, ...legacy, ...localNikeProducts].slice(0, limit);
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
+  const localProduct = getLocalNikeProductById(id);
+  if (localProduct) return localProduct;
   const catalogProduct = await getCatalogV2ProductById(id);
-  if (catalogProduct) return null;
+  if (catalogProduct) return catalogProduct;
 
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
@@ -120,6 +106,8 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 export async function getCatalogProductById(id: string): Promise<Product | null> {
+  const localProduct = getLocalNikeProductById(id);
+  if (localProduct) return localProduct;
   const catalogProduct = await getCatalogV2ProductById(id);
   if (catalogProduct) return catalogProduct;
   return getProductById(id);
@@ -131,12 +119,7 @@ export async function getRelatedProducts(
   limit = 4,
 ): Promise<Product[]> {
   const catalogProducts = await getCatalogV2Products();
-  if (catalogProducts.length > 0) {
-    return catalogProducts
-      .filter((product) => product.category === category && product.id !== excludeId)
-      .slice(0, limit);
-  }
-
+  const localNikeProducts = getLocalNikeProducts();
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -144,8 +127,11 @@ export async function getRelatedProducts(
     .eq("category", category)
     .neq("id", excludeId)
     .limit(limit);
-  if (error || !data) return [];
-  return (data as ProductRow[]).map(rowToKoi);
+  const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
+  return [...localNikeProducts, ...catalogProducts]
+    .filter((product) => product.category === category && product.id !== excludeId)
+    .concat(legacy)
+    .slice(0, limit);
 }
 
 export async function getRelatedProductsForTitle(
@@ -159,15 +145,15 @@ export async function getRelatedProductsForTitle(
 
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
   const catalogProducts = await getCatalogV2ProductsByBrand(brandName);
-  if (catalogProducts.length > 0) return catalogProducts;
+  const localProducts = getLocalNikeProducts().filter((product) => product.brandName.toLowerCase() === brandName.toLowerCase());
 
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
     .select("*")
     .ilike("brand_name", brandName);
-  if (error || !data) return [];
-  return (data as ProductRow[]).map(rowToKoi);
+  const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
+  return [...localProducts, ...catalogProducts, ...legacy];
 }
 
 export async function getBrandCatalog(brandName: string, _category: string): Promise<Product[]> {

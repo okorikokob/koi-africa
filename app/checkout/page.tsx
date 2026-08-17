@@ -30,7 +30,7 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          items: items.map((item) => ({ productId: item.id, qty: item.qty })),
+          items: items.map((item) => ({ productId: item.productId, variantId: item.variantId, qty: item.qty })),
         }),
       });
       const json = await res.json();
@@ -83,7 +83,7 @@ export default function CheckoutPage() {
 
           <div className="mb-4 flex flex-col gap-3">
             {items.map((item) => (
-              <div key={item.id} className="flex items-center gap-3">
+              <div key={item.cartKey} className="flex items-center gap-3">
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface-secondary">
                   {item.image && (
                     <Image src={item.image} alt={item.title} fill sizes="48px" className="object-cover" />
@@ -94,6 +94,11 @@ export default function CheckoutPage() {
                     {item.title}
                     {item.qty > 1 ? ` × ${item.qty}` : ""}
                   </p>
+                  {item.selectedOptions?.length ? (
+                    <p className="truncate font-sans text-[11px] text-text-secondary">
+                      {item.selectedOptions.map((option) => option.value).join(" · ")}
+                    </p>
+                  ) : null}
                 </div>
                 <span className="shrink-0 font-sans text-xs font-bold text-text-primary">
                   {formatNaira(item.priceNaira * item.qty)}
