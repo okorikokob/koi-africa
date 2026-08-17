@@ -19,11 +19,12 @@ function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const reference = searchParams.get("reference");
   const { clearCart } = useCart();
-  const [state, setState] = useState<VerifyState>({ status: "verifying" });
+  const [state, setState] = useState<VerifyState>(
+    reference ? { status: "verifying" } : { status: "error", message: "Missing payment reference." },
+  );
 
   useEffect(() => {
     if (!reference) {
-      setState({ status: "error", message: "Missing payment reference." });
       return;
     }
 

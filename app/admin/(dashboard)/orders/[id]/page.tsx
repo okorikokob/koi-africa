@@ -36,6 +36,10 @@ type OrderItemRow = {
   price_paid: number;
   quantity: number;
   product_id: string | null;
+  variant_id: string | null;
+  sku: string | null;
+  gtin: string | null;
+  selected_options: Array<{ name: string; value: string }> | null;
 };
 
 type Props = {
@@ -60,7 +64,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
 
   const { data: itemRows } = await insforge.database
     .from("order_items")
-    .select("id, title, vendor_name, price_paid, quantity, product_id")
+    .select("id, title, vendor_name, price_paid, quantity, product_id, variant_id, sku, gtin, selected_options")
     .eq("order_id", row.id);
 
   const items = (itemRows ?? []) as OrderItemRow[];
@@ -74,6 +78,14 @@ export default async function AdminOrderDetailPage({ params }: Props) {
       .in("id", productIds);
     for (const p of (products ?? []) as Array<{ id: string; image_url: string | null }>) {
       imageByProductId.set(p.id, p.image_url);
+    }
+    const { data: catalogImages } = await insforge.database
+      .from("catalog_product_images")
+      .select("product_id, official_cdn_url, position")
+      .in("product_id", productIds)
+      .order("position", { ascending: true });
+    for (const image of (catalogImages ?? []) as Array<{ product_id: string; official_cdn_url: string }>) {
+      if (!imageByProductId.has(image.product_id)) imageByProductId.set(image.product_id, image.official_cdn_url);
     }
   }
 
@@ -133,6 +145,16 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                     <p className="font-sans text-xs text-text-muted">
                       {item.vendor_name} · Qty {item.quantity}
                     </p>
+                    {item.selected_options?.length ? (
+                      <p className="font-sans text-xs text-text-secondary">
+                        {item.selected_options.map((option) => `${option.name}: ${option.value}`).join(" · ")}
+                      </p>
+                    ) : null}
+                    {(item.sku || item.gtin || item.variant_id) && (
+                      <p className="font-mono text-[10px] text-text-muted">
+                        {[item.sku && `SKU ${item.sku}`, item.gtin && `GTIN ${item.gtin}`, item.variant_id && `Variant ${item.variant_id}`].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
                   <p className="shrink-0 font-sans text-sm font-semibold text-text-primary">
                     {formatNaira(item.price_paid * item.quantity)}

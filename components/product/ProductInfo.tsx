@@ -94,8 +94,8 @@ function AccordionSection({
 
 export function ProductInfo({ product, onColorChange }: Props) {
   const { addItem } = useCart();
-  const variants: ProductVariant[] = product.variants ?? [];
-  const options = product.options ?? [];
+  const variants = useMemo<ProductVariant[]>(() => product.variants ?? [], [product.variants]);
+  const options = useMemo(() => product.options ?? [], [product.options]);
   const colorImages = product.colorImages ?? {};
   const colorImageSets = product.colorImageSets ?? {};
 
@@ -103,12 +103,17 @@ export function ProductInfo({ product, onColorChange }: Props) {
     (o) => o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colour",
   );
   const sizeOption = options.find((o) => o.name.toLowerCase() === "size");
-  const hasVariants = variants.length > 0 && (colorOption || sizeOption);
+  const extraOptions = useMemo(
+    () => options.filter((option) => !["color", "colour", "size"].includes(option.name.toLowerCase())),
+    [options],
+  );
+  const hasVariants = variants.length > 0 && options.length > 0;
 
   const [selectedColor, setSelectedColor] = useState<string | null>(
     colorOption?.values[0] ?? null,
   );
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [selectedExtras, setSelectedExtras] = useState<Record<string, string>>({});
   const [qty, setQty] = useState(1);
 
   function handleColorSelect(value: string) {
@@ -139,7 +144,10 @@ export function ProductInfo({ product, onColorChange }: Props) {
           !sizeOption ||
           !selectedSize ||
           v.options.some((o) => o.name.toLowerCase() === "size" && o.label === selectedSize);
-        return colorMatch && sizeMatch && v.available;
+        const extrasMatch = extraOptions.every((option) =>
+          !selectedExtras[option.name] || v.options.some((value) => value.name === option.name && value.label === selectedExtras[option.name]),
+        );
+        return colorMatch && sizeMatch && extrasMatch && v.available;
       }) ??
       variants.find(
         (v) =>
@@ -152,7 +160,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
       ) ??
       null
     );
-  }, [variants, colorOption, sizeOption, selectedColor, selectedSize, hasVariants]);
+  }, [variants, colorOption, sizeOption, extraOptions, selectedColor, selectedSize, selectedExtras, hasVariants]);
 
   const availableSizesForColor = useMemo(() => {
     if (!colorOption || !sizeOption) return new Set<string>();
@@ -175,12 +183,18 @@ export function ProductInfo({ product, onColorChange }: Props) {
   const displayPrice = selectedVariant?.price ?? product.priceAmount;
   const displayCurrency = selectedVariant?.currency ?? product.priceCurrency;
   const needsSize = !!sizeOption && !selectedSize;
+  const needsExtraOption = extraOptions.some((option) => !selectedExtras[option.name]);
+  const needsSelection = needsSize || needsExtraOption;
   const priceNaira = toNaira(displayPrice, displayCurrency);
 
   function handleAddToCart() {
     addItem(
       {
-        id: product.id,
+        productId: product.id,
+        variantId: selectedVariant?.id,
+        sku: selectedVariant?.sku,
+        gtin: selectedVariant?.gtin,
+        selectedOptions: selectedVariant?.options.map((option) => ({ name: option.name, value: option.label })),
         title: product.title,
         brandName: product.brandName,
         image: product.imageUrl,
@@ -327,11 +341,33 @@ export function ProductInfo({ product, onColorChange }: Props) {
         </div>
       )}
 
+      {extraOptions.map((option) => (
+        <div key={option.name} className="flex flex-col gap-3">
+          <p className="font-sans text-sm font-medium text-text-primary">Select {option.name}</p>
+          <div className="flex flex-wrap gap-2.5">
+            {option.values.map((value) => {
+              const active = selectedExtras[option.name] === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSelectedExtras((current) => ({ ...current, [option.name]: value }))}
+                  aria-pressed={active}
+                  className={`min-h-[44px] rounded-button border px-4 py-2.5 font-sans text-sm font-medium transition-all duration-150 ${active ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-surface text-text-primary hover:border-text-secondary"}`}
+                >
+                  {value}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+
       {/* ── Add to cart (desktop inline row — sticky bar handles mobile) ── */}
       <div className="flex flex-col gap-3 pt-1">
-        {needsSize ? (
+        {needsSelection ? (
           <div className="hidden w-full cursor-default select-none items-center justify-center gap-2 rounded-button bg-primary/30 px-6 py-4 font-display text-base font-medium text-primary-foreground md:inline-flex">
-            Select a size to continue
+            Select all options to continue
           </div>
         ) : (
           <div className="hidden items-center gap-3 md:flex">
@@ -418,9 +454,9 @@ export function ProductInfo({ product, onColorChange }: Props) {
 
       {/* ── Sticky mobile add-to-cart bar ── */}
       <div className="fixed inset-x-0 bottom-0 z-[900] border-t border-border bg-surface/95 px-4 py-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden">
-        {needsSize ? (
+        {needsSelection ? (
           <div className="flex h-[52px] w-full cursor-default select-none items-center justify-center gap-2 rounded-2xl bg-primary/30 font-display text-sm font-medium text-primary-foreground">
-            Select a size to continue
+            Select all options to continue
           </div>
         ) : (
           <div className="mx-auto flex max-w-[520px] items-center gap-3">

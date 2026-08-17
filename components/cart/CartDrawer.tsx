@@ -61,7 +61,7 @@ export function CartDrawer() {
               ) : (
                 items.map((item) => (
                   <div
-                    key={item.id}
+                    key={item.cartKey}
                     className="flex items-center gap-3 border-b border-border py-3.5"
                   >
                     <div className="relative h-[60px] w-[60px] flex-shrink-0 overflow-hidden rounded-[10px] bg-surface-secondary">
@@ -74,13 +74,18 @@ export function CartDrawer() {
                         {item.title}
                         {item.qty > 1 ? ` × ${item.qty}` : ""}
                       </p>
+                      {item.selectedOptions?.length ? (
+                        <p className="truncate font-sans text-[11px] text-text-secondary">
+                          {item.selectedOptions.map((option) => option.value).join(" · ")}
+                        </p>
+                      ) : null}
                     </div>
                     <span className="flex-shrink-0 font-sans text-sm font-black text-text-primary">
                       {formatNaira(item.priceNaira * item.qty)}
                     </span>
                     <button
                       type="button"
-                      onClick={() => removeItem(item.id)}
+                      onClick={() => removeItem(item.cartKey)}
                       aria-label="Remove item"
                       className="flex-shrink-0 p-1 text-xl leading-none text-text-muted transition-colors hover:text-error"
                     >
