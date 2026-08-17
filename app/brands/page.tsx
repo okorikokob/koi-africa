@@ -2,13 +2,29 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { AllBrandsGrid } from "@/components/catalog/AllBrandsGrid";
-import { getBrandSummaries } from "@/lib/catalog-db";
+import { getBrandSummaries, type BrandSummary } from "@/lib/catalog-db";
 import { FEATURED_BRANDS } from "@/lib/mock-data";
+import { getLocalCatalogBrands, getLocalCatalogProducts } from "@/lib/local-catalog";
 
 export const dynamic = "force-dynamic";
 
+function localFallbackSummaries(brands: typeof FEATURED_BRANDS): BrandSummary[] {
+  const localProducts = getLocalCatalogProducts();
+  return brands.map((brand) => {
+    const products = localProducts.filter((product) => product.brandName.toLowerCase() === brand.name.toLowerCase());
+    return { brand, productCount: products.length, imageUrl: products[0]?.imageUrl ?? null };
+  });
+}
+
 export default async function BrandsPage() {
-  const summaries = await getBrandSummaries(FEATURED_BRANDS);
+  const brands = [...FEATURED_BRANDS, ...getLocalCatalogBrands()];
+  const localDemoEnabled = process.env.USE_LOCAL_NIKE_CATALOG === "true" || process.env.USE_LOCAL_HM_CATALOG === "true";
+  const summaries = localDemoEnabled
+    ? await Promise.race([
+        getBrandSummaries(brands),
+        new Promise<BrandSummary[]>((resolve) => setTimeout(() => resolve(localFallbackSummaries(brands)), 3_000)),
+      ])
+    : await getBrandSummaries(brands);
   const heroImage = summaries.find((s) => s.imageUrl)?.imageUrl;
 
   return (

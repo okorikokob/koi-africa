@@ -184,7 +184,9 @@ export function ProductInfo({ product, onColorChange }: Props) {
   const displayCurrency = selectedVariant?.currency ?? product.priceCurrency;
   const needsSize = !!sizeOption && !selectedSize;
   const needsExtraOption = extraOptions.some((option) => !selectedExtras[option.name]);
-  const needsSelection = needsSize || needsExtraOption;
+  const unavailable = hasVariants ? selectedVariant?.available === false : product.available === false;
+  const needsSelection = needsSize || needsExtraOption || unavailable;
+  const selectionMessage = unavailable ? "Currently out of stock" : "Select all options to continue";
   const priceNaira = toNaira(displayPrice, displayCurrency);
 
   function handleAddToCart() {
@@ -234,6 +236,11 @@ export function ProductInfo({ product, onColorChange }: Props) {
           <span className="font-display text-3xl font-bold text-text-primary md:text-[38px]">
             {formatNaira(toNaira(displayPrice, displayCurrency))}
           </span>
+          {product.compareAtPriceAmount && product.compareAtPriceAmount > displayPrice && (
+            <span className="font-sans text-base text-text-muted line-through">
+              {formatNaira(toNaira(product.compareAtPriceAmount, product.priceCurrency))}
+            </span>
+          )}
           {product.tag && (
             <span
               className={`rounded-full px-3 py-1 font-sans text-xs font-semibold ${
@@ -248,6 +255,14 @@ export function ProductInfo({ product, onColorChange }: Props) {
           Delivered to Nigeria in <span className="font-semibold text-text-primary">7–14 days</span> · price includes shipping &amp; KOI delivery
         </p>
       </div>
+
+      {(product.colorName || product.category || product.availabilityStatus) && (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-2xl bg-surface-secondary p-4 font-sans text-sm">
+          {product.colorName && <><dt className="text-text-muted">Colour</dt><dd className="text-right font-medium text-text-primary">{product.colorName}</dd></>}
+          {product.category && <><dt className="text-text-muted">Category</dt><dd className="text-right font-medium text-text-primary">{product.category}</dd></>}
+          {product.availabilityStatus && <><dt className="text-text-muted">Availability</dt><dd className="text-right font-medium text-text-primary">{product.available ? "In stock" : "Out of stock"}</dd></>}
+        </dl>
+      )}
 
       {/* ── Colour selector ── */}
       {colorOption && colorOption.values.length > 0 && (
@@ -367,7 +382,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
       <div className="flex flex-col gap-3 pt-1">
         {needsSelection ? (
           <div className="hidden w-full cursor-default select-none items-center justify-center gap-2 rounded-button bg-primary/30 px-6 py-4 font-display text-base font-medium text-primary-foreground md:inline-flex">
-            Select all options to continue
+            {selectionMessage}
           </div>
         ) : (
           <div className="hidden items-center gap-3 md:flex">
@@ -456,7 +471,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
       <div className="fixed inset-x-0 bottom-0 z-[900] border-t border-border bg-surface/95 px-4 py-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))] backdrop-blur-xl md:hidden">
         {needsSelection ? (
           <div className="flex h-[52px] w-full cursor-default select-none items-center justify-center gap-2 rounded-2xl bg-primary/30 font-display text-sm font-medium text-primary-foreground">
-            Select all options to continue
+            {selectionMessage}
           </div>
         ) : (
           <div className="mx-auto flex max-w-[520px] items-center gap-3">

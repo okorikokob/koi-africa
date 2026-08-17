@@ -37,6 +37,25 @@ Last updated: 2026-08-17
 
 **Pattern notes:** Size and generic variant attributes such as Fit share the same button treatment. All required variant attributes must be selected before Add to Cart is enabled.
 
+### Product source metadata
+
+File: components/product/ProductInfo.tsx
+Last updated: 2026-08-17
+
+| Property | Class |
+| --- | --- |
+| Background | `bg-surface-secondary` |
+| Border | none |
+| Border radius | `rounded-2xl` |
+| Text — primary | `font-sans text-sm font-medium text-text-primary` |
+| Text — secondary | `font-sans text-sm text-text-muted` |
+| Spacing | `p-4 gap-x-4 gap-y-2` |
+| Hover state | none |
+| Shadow | none |
+| Accent usage | none |
+
+**Pattern notes:** Source-provided facts such as colour, category, and availability use a compact definition-list panel. Missing facts are omitted rather than fabricated.
+
 ### Cart variant metadata
 
 File: app/cart/page.tsx
@@ -72,7 +91,7 @@ Last updated: 2026-08-17
 | Shadow | none |
 | Accent usage | primary soft-to-solid interaction |
 
-**Pattern notes:** Products without options use quick Add. Products with required variants show Select and navigate to the PDP so a specific purchasable variant is captured.
+**Pattern notes:** Products without options use quick Add. Products with required variants show Select and navigate to the PDP so a specific purchasable variant is captured. Unavailable products show Sold out with the same action styling at reduced opacity.
 
 <!--
 Entry template:

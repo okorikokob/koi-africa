@@ -30,11 +30,13 @@ export type Product = {
   category: string;
   imageUrl: string;
   priceAmount: number;
+  compareAtPriceAmount?: number;
   priceCurrency: string;
   vendorName: string;
   vendorUrl: string;
   isFeatured: boolean;
   description?: string;
+  colorName?: string;
   allImages?: string[];
   colorImages?: Record<string, string>;
   colorImageSets?: Record<string, string[]>;
