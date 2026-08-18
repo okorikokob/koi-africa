@@ -6,6 +6,7 @@ import { FEATURED_BRANDS } from "@/lib/mock-data";
 import { getLocalCatalogBrands } from "@/lib/local-catalog";
 import { getBrandCatalog } from "@/lib/catalog-db";
 import { BrandProductsSection } from "@/components/catalog/BrandProductsSection";
+import { toProductCardData } from "@/lib/catalog-helpers";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -76,7 +77,7 @@ export default async function BrandPage({ params }: Props) {
         </div>
       </div>
 
-      <BrandProductsSection products={products} />
+      <BrandProductsSection products={products.map(toProductCardData)} />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { getCatalogProductById, getRelatedProductsForTitle } from "@/lib/catalog
 import { ProductDetailClient } from "@/components/product/ProductDetailClient";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { Reveal } from "@/components/motion/Reveal";
+import { toProductCardData } from "@/lib/catalog-helpers";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -44,7 +45,7 @@ export default async function ProductDetailPage({ params }: Props) {
                 </Link>
               </div>
             </Reveal>
-            <ProductGrid products={related} />
+            <ProductGrid products={related.map(toProductCardData)} />
           </section>
         )}
       </div>

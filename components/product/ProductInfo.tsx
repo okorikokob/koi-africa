@@ -6,6 +6,7 @@ import { Star, ChevronDown, Ruler, Minus, Plus } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatNaira, toNaira } from "@/lib/currency";
 import type { Product, ProductVariant } from "@/types";
+import { resolveProductVariant } from "@/lib/product-variant-selection";
 
 type Props = {
   product: Product;
@@ -107,7 +108,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
     () => options.filter((option) => !["color", "colour", "size"].includes(option.name.toLowerCase())),
     [options],
   );
-  const hasVariants = variants.length > 0 && options.length > 0;
+  const hasVariants = variants.length > 0;
 
   const [selectedColor, setSelectedColor] = useState<string | null>(
     colorOption?.values[0] ?? null,
@@ -131,49 +132,25 @@ export function ProductInfo({ product, onColorChange }: Props) {
 
   const selectedVariant = useMemo<ProductVariant | null>(() => {
     if (!hasVariants) return null;
-    return (
-      variants.find((v) => {
-        const colorMatch =
-          !colorOption ||
-          v.options.some(
-            (o) =>
-              (o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colour") &&
-              o.label === selectedColor,
-          );
-        const sizeMatch =
-          !sizeOption ||
-          !selectedSize ||
-          v.options.some((o) => o.name.toLowerCase() === "size" && o.label === selectedSize);
-        const extrasMatch = extraOptions.every((option) =>
-          !selectedExtras[option.name] || v.options.some((value) => value.name === option.name && value.label === selectedExtras[option.name]),
-        );
-        return colorMatch && sizeMatch && extrasMatch && v.available;
-      }) ??
-      variants.find(
-        (v) =>
-          !colorOption ||
-          v.options.some(
-            (o) =>
-              (o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colour") &&
-              o.label === selectedColor,
-          ),
-      ) ??
-      null
-    );
-  }, [variants, colorOption, sizeOption, extraOptions, selectedColor, selectedSize, selectedExtras, hasVariants]);
+    return resolveProductVariant(variants, {
+      color: selectedColor,
+      size: selectedSize,
+      ...selectedExtras,
+    });
+  }, [variants, selectedColor, selectedSize, selectedExtras, hasVariants]);
 
-  const availableSizesForColor = useMemo(() => {
-    if (!colorOption || !sizeOption) return new Set<string>();
+  const availableSizes = useMemo(() => {
+    if (!sizeOption) return new Set<string>();
     return new Set(
       variants
         .filter(
           (v) =>
             v.available &&
-            v.options.some(
+            (!colorOption || v.options.some(
               (o) =>
                 (o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colour") &&
                 o.label === selectedColor,
-            ),
+            )),
         )
         .map((v) => v.options.find((o) => o.name.toLowerCase() === "size")?.label ?? "")
         .filter(Boolean),
@@ -184,9 +161,10 @@ export function ProductInfo({ product, onColorChange }: Props) {
   const displayCurrency = selectedVariant?.currency ?? product.priceCurrency;
   const needsSize = !!sizeOption && !selectedSize;
   const needsExtraOption = extraOptions.some((option) => !selectedExtras[option.name]);
-  const unavailable = hasVariants ? selectedVariant?.available === false : product.available === false;
-  const needsSelection = needsSize || needsExtraOption || unavailable;
-  const selectionMessage = unavailable ? "Currently out of stock" : "Select all options to continue";
+  const ambiguousVariant = hasVariants && options.length === 0 && variants.length > 1;
+  const unavailable = hasVariants ? (selectedVariant?.available === false || variants.every((variant) => !variant.available)) : product.available === false;
+  const needsSelection = needsSize || needsExtraOption || ambiguousVariant || unavailable;
+  const selectionMessage = ambiguousVariant ? "Variant selection unavailable" : unavailable ? "Currently out of stock" : "Select all options to continue";
   const priceNaira = toNaira(displayPrice, displayCurrency);
 
   function handleAddToCart() {
@@ -329,9 +307,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
           <div className="grid grid-cols-4 gap-3 sm:grid-cols-5 sm:gap-2 lg:grid-cols-4 xl:grid-cols-6">
             {sizeOption.values.map((value) => {
               const available =
-                !colorOption ||
-                availableSizesForColor.size === 0 ||
-                availableSizesForColor.has(value);
+                availableSizes.has(value);
               const active = selectedSize === value;
               return (
                 <button

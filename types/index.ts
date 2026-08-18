@@ -44,6 +44,7 @@ export type Product = {
   rating?: number;
   reviewCount?: number;
   variants?: ProductVariant[];
+  requiresVariantSelection?: boolean;
   options?: Array<{ name: string; values: string[] }>;
   tag?: "new" | "bestseller";
   source?: "UK" | "US";

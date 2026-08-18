@@ -1,5 +1,6 @@
 import { getLocalHmProductById, getLocalHmProducts } from "@/lib/local-hm-catalog";
 import { getLocalNikeProductById, getLocalNikeProducts } from "@/lib/local-nike-catalog";
+import { getLocalSephoraProductById, getLocalSephoraProducts } from "@/lib/local-sephora-catalog";
 import type { Brand, Product } from "@/types";
 
 const HM_BRAND: Brand = {
@@ -12,14 +13,38 @@ const HM_BRAND: Brand = {
   isFeatured: false,
 };
 
+const SEPHORA_BRAND: Brand = {
+  id: "brand-sephora-local",
+  name: "Sephora",
+  slug: "sephora",
+  logoUrl: "",
+  description: "Beauty, skincare, fragrance and makeup from Sephora US.",
+  category: "Beauty",
+  isFeatured: false,
+};
+
 export function getLocalCatalogProducts(): Product[] {
-  return [...getLocalNikeProducts(), ...getLocalHmProducts()];
+  return [...getLocalNikeProducts(), ...getLocalHmProducts(), ...getLocalSephoraProducts()];
+}
+
+export function getLocalHomepageProducts(): Product[] {
+  return [getLocalNikeProducts()[0], getLocalHmProducts()[0], getLocalSephoraProducts()[0]].filter(
+    (product): product is Product => Boolean(product),
+  );
 }
 
 export function getLocalCatalogProductById(id: string): Product | null {
-  return getLocalNikeProductById(id) ?? getLocalHmProductById(id);
+  return getLocalNikeProductById(id) ?? getLocalHmProductById(id) ?? getLocalSephoraProductById(id);
 }
 
 export function getLocalCatalogBrands(): Brand[] {
-  return process.env.USE_LOCAL_HM_CATALOG === "true" ? [HM_BRAND] : [];
+  return [
+    ...(process.env.USE_LOCAL_HM_CATALOG === "true" ? [HM_BRAND] : []),
+    ...(process.env.USE_LOCAL_SEPHORA_CATALOG === "true" ? [SEPHORA_BRAND] : []),
+  ];
+}
+
+export function getLocalCatalogProductsByBrand(brandName: string): Product[] {
+  if (brandName.toLowerCase() === "sephora") return getLocalSephoraProducts();
+  return getLocalCatalogProducts().filter((product) => product.brandName.toLowerCase() === brandName.toLowerCase());
 }

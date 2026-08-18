@@ -7,17 +7,22 @@ import { HowItWorks } from "@/components/home/HowItWorks";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { Reveal } from "@/components/motion/Reveal";
 import { getFeaturedProducts, getBrandSummaries } from "@/lib/catalog-db";
+import { toProductCardData } from "@/lib/catalog-helpers";
+import { getEnabledHomepageDemoBrands, prioritizeHomepageBrands } from "@/lib/homepage-catalog";
 
 export const dynamic = "force-dynamic";
 import { FEATURED_PRODUCTS, FEATURED_BRANDS } from "@/lib/mock-data";
 import Link from "next/link";
 
 export default async function HomePage() {
+  const homepageBrands = prioritizeHomepageBrands(FEATURED_BRANDS, getEnabledHomepageDemoBrands());
   const [dbFeatured, brandSummaries] = await Promise.all([
     getFeaturedProducts(8),
-    getBrandSummaries(FEATURED_BRANDS),
+    getBrandSummaries(homepageBrands),
   ]);
-  const trendingProducts = (dbFeatured.length > 0 ? dbFeatured : FEATURED_PRODUCTS).slice(0, 4);
+  const trendingProducts = (dbFeatured.length > 0 ? dbFeatured : FEATURED_PRODUCTS)
+    .slice(0, 4)
+    .map(toProductCardData);
 
   return (
     <div className="flex flex-col">

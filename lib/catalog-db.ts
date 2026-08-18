@@ -4,9 +4,11 @@ import {
   getCatalogV2ProductById,
   getCatalogV2Products,
   getCatalogV2ProductsByBrand,
+  getCatalogV2FeaturedProducts,
 } from "@/lib/catalog-v2-db";
 import type { Brand, Product } from "@/types";
-import { getLocalCatalogProductById, getLocalCatalogProducts } from "@/lib/local-catalog";
+import { getLocalCatalogProductById, getLocalCatalogProducts, getLocalCatalogProductsByBrand, getLocalHomepageProducts } from "@/lib/local-catalog";
+import { getEnabledHomepageDemoBrands, prioritizeHomepageProducts } from "@/lib/homepage-catalog";
 
 export type ProductListResult = {
   products: Product[];
@@ -77,8 +79,8 @@ export async function getCategoryFacets(): Promise<string[]> {
 }
 
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
-  const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalCatalogProducts();
+  const catalogProducts = await getCatalogV2FeaturedProducts(limit);
+  const localHomepageProducts = getLocalHomepageProducts();
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
     .from("products")
@@ -86,7 +88,11 @@ export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
     .eq("is_featured", true)
     .limit(limit);
   const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
-  return [...catalogProducts, ...legacy, ...localNikeProducts].slice(0, limit);
+  return prioritizeHomepageProducts(
+    [...localHomepageProducts, ...catalogProducts, ...legacy],
+    getEnabledHomepageDemoBrands(),
+    limit,
+  );
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
@@ -149,8 +155,8 @@ export async function getRelatedProductsForTitle(
 }
 
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
-  const localProducts = getLocalCatalogProducts().filter((product) => product.brandName.toLowerCase() === brandName.toLowerCase());
-  if (brandName.toLowerCase() === "h&m" && localProducts.length > 0) return localProducts;
+  const localProducts = getLocalCatalogProductsByBrand(brandName);
+  if (["h&m", "sephora"].includes(brandName.toLowerCase()) && localProducts.length > 0) return localProducts;
 
   const catalogProducts = await getCatalogV2ProductsByBrand(brandName);
 
