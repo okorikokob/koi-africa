@@ -121,19 +121,25 @@ const CATALOG_SELECT = `
   catalog_product_variants(id,source_variant_id,sku,gtin,color_name,size_label,currency,price_minor,sale_price_minor,available,is_active,option_values,availability_status)
 `;
 
-async function runCatalogQuery(): Promise<Product[]> {
+async function runCatalogQuery(limit?: number): Promise<Product[]> {
   const insforge = createInsforgeServer();
-  const { data, error } = await insforge.database
+  let query = insforge.database
     .from("catalog_products")
     .select(CATALOG_SELECT)
     .eq("is_active", true)
     .order("last_synced_at", { ascending: false });
+  if (limit != null) query = query.limit(limit);
+  const { data, error } = await query;
   if (error || !data) return [];
   return (data as unknown as CatalogProductRow[]).map(rowToProduct);
 }
 
 export async function getCatalogV2Products(): Promise<Product[]> {
   return runCatalogQuery();
+}
+
+export async function getCatalogV2FeaturedProducts(limit: number): Promise<Product[]> {
+  return runCatalogQuery(limit);
 }
 
 export async function getCatalogV2ProductById(id: string): Promise<Product | null> {

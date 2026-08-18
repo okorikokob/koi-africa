@@ -27,6 +27,12 @@ export function getLocalCatalogProducts(): Product[] {
   return [...getLocalNikeProducts(), ...getLocalHmProducts(), ...getLocalSephoraProducts()];
 }
 
+export function getLocalHomepageProducts(): Product[] {
+  return [getLocalNikeProducts()[0], getLocalHmProducts()[0], getLocalSephoraProducts()[0]].filter(
+    (product): product is Product => Boolean(product),
+  );
+}
+
 export function getLocalCatalogProductById(id: string): Product | null {
   return getLocalNikeProductById(id) ?? getLocalHmProductById(id) ?? getLocalSephoraProductById(id);
 }
