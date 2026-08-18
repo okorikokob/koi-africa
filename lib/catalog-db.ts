@@ -156,7 +156,7 @@ export async function getRelatedProductsForTitle(
 
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
   const localProducts = getLocalCatalogProductsByBrand(brandName);
-  if (["h&m", "sephora"].includes(brandName.toLowerCase()) && localProducts.length > 0) return localProducts;
+  if (["nike", "h&m", "sephora"].includes(brandName.toLowerCase()) && localProducts.length > 0) return localProducts;
 
   const catalogProducts = await getCatalogV2ProductsByBrand(brandName);
 
