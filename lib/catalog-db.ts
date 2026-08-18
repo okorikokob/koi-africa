@@ -6,7 +6,7 @@ import {
   getCatalogV2ProductsByBrand,
 } from "@/lib/catalog-v2-db";
 import type { Brand, Product } from "@/types";
-import { getLocalCatalogProductById, getLocalCatalogProducts } from "@/lib/local-catalog";
+import { getLocalCatalogProductById, getLocalCatalogProducts, getLocalCatalogProductsByBrand } from "@/lib/local-catalog";
 
 export type ProductListResult = {
   products: Product[];
@@ -149,8 +149,8 @@ export async function getRelatedProductsForTitle(
 }
 
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
-  const localProducts = getLocalCatalogProducts().filter((product) => product.brandName.toLowerCase() === brandName.toLowerCase());
-  if (brandName.toLowerCase() === "h&m" && localProducts.length > 0) return localProducts;
+  const localProducts = getLocalCatalogProductsByBrand(brandName);
+  if (["h&m", "sephora"].includes(brandName.toLowerCase()) && localProducts.length > 0) return localProducts;
 
   const catalogProducts = await getCatalogV2ProductsByBrand(brandName);
 

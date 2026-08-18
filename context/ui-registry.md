@@ -35,7 +35,7 @@ Last updated: 2026-08-17
 | Shadow | selected `shadow-sm`; selected colour `shadow-md` |
 | Accent usage | selected choices use `bg-primary text-primary-foreground` |
 
-**Pattern notes:** Size and generic variant attributes such as Fit share the same button treatment. All required variant attributes must be selected before Add to Cart is enabled.
+**Pattern notes:** Size and generic variant attributes such as Fit or Shade share the same button treatment. All required variant attributes must be selected before Add to Cart is enabled. A single exact variant without options may be selected automatically; multiple variants without distinguishable source options must remain disabled.
 
 ### Product source metadata
 
@@ -91,7 +91,7 @@ Last updated: 2026-08-17
 | Shadow | none |
 | Accent usage | primary soft-to-solid interaction |
 
-**Pattern notes:** Products without options use quick Add. Products with required variants show Select and navigate to the PDP so a specific purchasable variant is captured. Unavailable products show Sold out with the same action styling at reduced opacity.
+**Pattern notes:** Products without options use quick Add. Products with required or ambiguous variants show Select and navigate to the PDP so a specific purchasable variant is captured. Unavailable products show Sold out with the same action styling at reduced opacity.
 
 <!--
 Entry template:

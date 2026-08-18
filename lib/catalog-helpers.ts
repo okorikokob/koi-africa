@@ -24,3 +24,14 @@ export function toKoiProduct(p: ShopifyProduct, category = "fashion"): Product {
     options: p.options.length > 0 ? p.options : undefined,
   };
 }
+
+export function toProductCardData(product: Product): Product {
+  const card = { ...product };
+  delete card.description;
+  delete card.allImages;
+  delete card.colorImages;
+  delete card.colorImageSets;
+  delete card.variants;
+  delete card.productPageUrl;
+  return card;
+}

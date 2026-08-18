@@ -4,21 +4,20 @@ import { ArrowLeft } from "lucide-react";
 import { AllBrandsGrid } from "@/components/catalog/AllBrandsGrid";
 import { getBrandSummaries, type BrandSummary } from "@/lib/catalog-db";
 import { FEATURED_BRANDS } from "@/lib/mock-data";
-import { getLocalCatalogBrands, getLocalCatalogProducts } from "@/lib/local-catalog";
+import { getLocalCatalogBrands, getLocalCatalogProductsByBrand } from "@/lib/local-catalog";
 
 export const dynamic = "force-dynamic";
 
 function localFallbackSummaries(brands: typeof FEATURED_BRANDS): BrandSummary[] {
-  const localProducts = getLocalCatalogProducts();
   return brands.map((brand) => {
-    const products = localProducts.filter((product) => product.brandName.toLowerCase() === brand.name.toLowerCase());
+    const products = getLocalCatalogProductsByBrand(brand.name);
     return { brand, productCount: products.length, imageUrl: products[0]?.imageUrl ?? null };
   });
 }
 
 export default async function BrandsPage() {
   const brands = [...FEATURED_BRANDS, ...getLocalCatalogBrands()];
-  const localDemoEnabled = process.env.USE_LOCAL_NIKE_CATALOG === "true" || process.env.USE_LOCAL_HM_CATALOG === "true";
+  const localDemoEnabled = process.env.USE_LOCAL_NIKE_CATALOG === "true" || process.env.USE_LOCAL_HM_CATALOG === "true" || process.env.USE_LOCAL_SEPHORA_CATALOG === "true";
   const summaries = localDemoEnabled
     ? await Promise.race([
         getBrandSummaries(brands),
