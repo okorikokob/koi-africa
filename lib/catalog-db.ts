@@ -9,6 +9,7 @@ import {
 import type { Brand, Product } from "@/types";
 import { getLocalCatalogProductById, getLocalCatalogProducts, getLocalCatalogProductsByBrand, getLocalHomepageProducts } from "@/lib/local-catalog";
 import { getEnabledHomepageDemoBrands, prioritizeHomepageProducts } from "@/lib/homepage-catalog";
+import { nikePostgresReadsEnabled } from "@/lib/catalog-feature-flags";
 
 export type ProductListResult = {
   products: Product[];
@@ -112,6 +113,11 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 export async function getCatalogProductById(id: string): Promise<Product | null> {
+  if (nikePostgresReadsEnabled()) {
+    const { getNikePostgresProductById } = await import("@/lib/nike-postgres-catalog");
+    const postgresNikeProduct = await getNikePostgresProductById(id);
+    if (postgresNikeProduct) return postgresNikeProduct;
+  }
   const localProduct = getLocalCatalogProductById(id);
   if (localProduct) return localProduct;
   const catalogProduct = await getCatalogV2ProductById(id);
@@ -151,12 +157,25 @@ export async function getRelatedProductsForTitle(
   excludeId: string,
   limit = 4,
 ): Promise<Product[]> {
+  if (nikePostgresReadsEnabled()) {
+    const { getNikePostgresProductById, getNikePostgresProducts } = await import("@/lib/nike-postgres-catalog");
+    const postgresNikeProduct = await getNikePostgresProductById(excludeId);
+    if (postgresNikeProduct) {
+      return (await getNikePostgresProducts())
+        .filter((product) => product.category === category && product.id !== excludeId)
+        .slice(0, limit);
+    }
+  }
   return getRelatedProducts(category, excludeId, limit);
 }
 
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
+  if (brandName.toLowerCase() === "nike" && nikePostgresReadsEnabled()) {
+    const { getNikePostgresProducts } = await import("@/lib/nike-postgres-catalog");
+    return getNikePostgresProducts();
+  }
   const localProducts = getLocalCatalogProductsByBrand(brandName);
-  if (["nike", "h&m", "sephora"].includes(brandName.toLowerCase()) && localProducts.length > 0) return localProducts;
+  if (["nike", "h&m", "sephora", "puma"].includes(brandName.toLowerCase()) && localProducts.length > 0) return localProducts;
 
   const catalogProducts = await getCatalogV2ProductsByBrand(brandName);
 

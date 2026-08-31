@@ -8,6 +8,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { CurrencySelector } from "@/components/currency/CurrencySelector";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -80,6 +81,7 @@ export function Navbar() {
             </div>
 
             <div className="flex flex-1 flex-col gap-6 p-6">
+              <CurrencySelector showLabel className="justify-between" />
               <button
                 type="button"
                 onClick={goToSearch}
@@ -134,6 +136,7 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2.5">
+          <CurrencySelector className="hidden md:flex" />
           <button
             type="button"
             aria-label="Search products"

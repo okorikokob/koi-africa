@@ -261,6 +261,8 @@ Never install a package without a clear reason. Before installing, check:
 
 Approved dependencies:
 
+- `drizzle-orm` + `drizzle-kit` — typed PostgreSQL schema, queries, and reviewable migrations
+- `postgres` — PostgreSQL driver shared by local and hosted environments
 - `@insforge/ssr` — InsForge client
 - `zod` — validation
 - `lucide-react` — icons

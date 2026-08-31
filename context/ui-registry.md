@@ -93,6 +93,26 @@ Last updated: 2026-08-17
 
 **Pattern notes:** Products without options use quick Add. Products with required or ambiguous variants show Select and navigate to the PDP so a specific purchasable variant is captured. Unavailable products show Sold out with the same action styling at reduced opacity.
 
+### Display currency selector
+
+File: components/currency/CurrencySelector.tsx
+Last updated: 2026-08-24
+
+| Property | Class |
+| --- | --- |
+| Background | `bg-surface` |
+| Border | `border-[1.5px] border-border` |
+| Border radius | `rounded-button` |
+| Text — primary | mobile `font-sans text-base font-semibold text-text-primary`; desktop `text-sm` |
+| Text — secondary | optional label `font-sans text-sm font-medium text-text-secondary` |
+| Spacing | control `px-3`; labelled group `gap-2` |
+| Hover state | `hover:border-primary` |
+| Focus state | `focus:border-primary focus:ring-2 focus:ring-primary-soft` |
+| Shadow | none |
+| Accent usage | primary border and soft primary focus ring |
+
+**Pattern notes:** Use a native select for compact global preferences. Keep the mobile control at least 44px high with 16px text to provide a proper touch target and avoid browser input zoom. The desktop navbar uses the unlabelled form; the mobile drawer uses the visible label. Hide the control unless the feature is enabled and a complete stored exchange-rate snapshot is available.
+
 <!--
 Entry template:
 

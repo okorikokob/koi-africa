@@ -5,19 +5,24 @@ import Image from "next/image";
 import { Star, ChevronDown, Ruler, Minus, Plus } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatNaira, toNaira } from "@/lib/currency";
-import type { Product, ProductVariant } from "@/types";
-import { resolveProductVariant } from "@/lib/product-variant-selection";
+import { useDisplayCurrency } from "@/components/currency/DisplayCurrencyProvider";
+import type { Product, ProductColourway, ProductVariant } from "@/types";
+import {
+  getAvailableProductOptionValues,
+  getInitialProductColour,
+  resolveProductVariant,
+} from "@/lib/product-variant-selection";
 
 type Props = {
   product: Product;
   onColorChange?: (colorName: string, images: string[]) => void;
 };
 
-const TRUST_FEATURES = [
+const LEGACY_TRUST_FEATURES = [
   "100% authentic — sourced from the official brand",
   "Pay in naira via Paystack, no dollar card needed",
   "Delivered to your door in 7–14 days",
-  "Price includes product, shipping & KOI delivery",
+  "International delivery quoted separately after packaging",
 ];
 
 // Best-effort colour name → hex for fallback circles
@@ -36,6 +41,13 @@ function colorFallbackHex(label: string): string | null {
     if (key.includes(name)) return hex;
   }
   return null;
+}
+
+function availabilityLabel(value: Pick<Product, "available" | "availabilityStatus">): string {
+  if (value.availabilityStatus === "limited") return "Limited stock";
+  if (value.availabilityStatus === "pre_order") return "Pre-order";
+  if (value.availabilityStatus === "unknown") return "Availability unknown";
+  return value.available ? "In stock" : "Out of stock";
 }
 
 function StarRow({ rating, count }: { rating: number; count?: number }) {
@@ -95,7 +107,10 @@ function AccordionSection({
 
 export function ProductInfo({ product, onColorChange }: Props) {
   const { addItem } = useCart();
+  const displayPricing = useDisplayCurrency();
   const variants = useMemo<ProductVariant[]>(() => product.variants ?? [], [product.variants]);
+  const colourways = useMemo<ProductColourway[]>(() => product.colourways ?? [], [product.colourways]);
+  const hasVerifiedColourways = colourways.length > 0;
   const options = useMemo(() => product.options ?? [], [product.options]);
   const colorImages = product.colorImages ?? {};
   const colorImageSets = product.colorImageSets ?? {};
@@ -109,15 +124,20 @@ export function ProductInfo({ product, onColorChange }: Props) {
     [options],
   );
   const hasVariants = variants.length > 0;
+  const initialColourway = colourways[0] ?? null;
 
   const [selectedColor, setSelectedColor] = useState<string | null>(
-    colorOption?.values[0] ?? null,
+    initialColourway?.colour ?? getInitialProductColour(colorOption?.values ?? [], colorImageSets),
+  );
+  const [selectedStyleColor, setSelectedStyleColor] = useState<string | null>(
+    initialColourway?.styleColor ?? null,
   );
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedExtras, setSelectedExtras] = useState<Record<string, string>>({});
   const [qty, setQty] = useState(1);
 
   function handleColorSelect(value: string) {
+    setSelectedStyleColor(null);
     setSelectedColor(value);
     setSelectedSize(null);
     if (onColorChange) {
@@ -130,41 +150,83 @@ export function ProductInfo({ product, onColorChange }: Props) {
     }
   }
 
+  function handleColourwaySelect(colourway: ProductColourway) {
+    setSelectedStyleColor(colourway.styleColor);
+    setSelectedColor(colourway.colour);
+    setSelectedSize(null);
+    onColorChange?.(colourway.styleColor, colourway.images);
+  }
+
+  const selectedColourway = useMemo(
+    () => colourways.find((colourway) => colourway.styleColor === selectedStyleColor) ?? initialColourway,
+    [colourways, selectedStyleColor, initialColourway],
+  );
+
   const selectedVariant = useMemo<ProductVariant | null>(() => {
     if (!hasVariants) return null;
     return resolveProductVariant(variants, {
+      styleColor: selectedStyleColor,
       color: selectedColor,
       size: selectedSize,
       ...selectedExtras,
     });
-  }, [variants, selectedColor, selectedSize, selectedExtras, hasVariants]);
+  }, [variants, selectedStyleColor, selectedColor, selectedSize, selectedExtras, hasVariants]);
 
   const availableSizes = useMemo(() => {
     if (!sizeOption) return new Set<string>();
-    return new Set(
-      variants
-        .filter(
-          (v) =>
-            v.available &&
-            (!colorOption || v.options.some(
-              (o) =>
-                (o.name.toLowerCase() === "color" || o.name.toLowerCase() === "colour") &&
-                o.label === selectedColor,
-            )),
-        )
-        .map((v) => v.options.find((o) => o.name.toLowerCase() === "size")?.label ?? "")
-        .filter(Boolean),
+    return getAvailableProductOptionValues(
+      variants,
+      "size",
+      hasVerifiedColourways
+        ? { styleColor: selectedStyleColor }
+        : { color: selectedColor },
     );
-  }, [variants, colorOption, sizeOption, selectedColor]);
+  }, [variants, sizeOption, hasVerifiedColourways, selectedStyleColor, selectedColor]);
 
-  const displayPrice = selectedVariant?.price ?? product.priceAmount;
-  const displayCurrency = selectedVariant?.currency ?? product.priceCurrency;
+  const displayPrice = selectedVariant?.price ?? selectedColourway?.priceAmount ?? product.priceAmount;
+  const displayCurrency = selectedVariant?.currency ?? selectedColourway?.priceCurrency ?? product.priceCurrency;
+  const compareAtPrice = selectedColourway?.compareAtPriceAmount ?? product.compareAtPriceAmount;
+  const compareAtCurrency = selectedColourway?.priceCurrency ?? product.priceCurrency;
+  const formattedDisplayPrice = displayPricing.featureEnabled
+    ? displayPricing.formatPrice(displayPrice, displayCurrency)
+      ?? displayPricing.formatSourcePrice(displayPrice, displayCurrency)
+      ?? `${displayPrice} ${displayCurrency}`
+    : formatNaira(toNaira(displayPrice, displayCurrency));
+  const formattedCompareAtPrice = compareAtPrice
+    ? displayPricing.featureEnabled
+      ? displayPricing.formatPrice(compareAtPrice, compareAtCurrency)
+        ?? displayPricing.formatSourcePrice(compareAtPrice, compareAtCurrency)
+      : formatNaira(toNaira(compareAtPrice, compareAtCurrency))
+    : null;
+  const formattedSourcePrice = displayPricing.formatSourcePrice(displayPrice, displayCurrency);
+  const trustFeatures = displayPricing.featureEnabled
+    ? [
+        "100% authentic — sourced from the official brand",
+        "View the original store price in its source currency",
+        "Delivered to your door in 7–14 days",
+        "Delivery is calculated separately from the product price",
+      ]
+    : LEGACY_TRUST_FEATURES;
   const needsSize = !!sizeOption && !selectedSize;
   const needsExtraOption = extraOptions.some((option) => !selectedExtras[option.name]);
   const ambiguousVariant = hasVariants && options.length === 0 && variants.length > 1;
-  const unavailable = hasVariants ? (selectedVariant?.available === false || variants.every((variant) => !variant.available)) : product.available === false;
+  const selectedColourUnavailable = Boolean(
+    (hasVerifiedColourways || colorOption) && selectedColor && sizeOption && availableSizes.size === 0,
+  );
+  const unavailable = hasVariants
+    ? selectedColourUnavailable || selectedVariant?.available === false || variants.every((variant) => !variant.available)
+    : product.available === false;
   const needsSelection = needsSize || needsExtraOption || ambiguousVariant || unavailable;
-  const selectionMessage = ambiguousVariant ? "Variant selection unavailable" : unavailable ? "Currently out of stock" : "Select all options to continue";
+  const selectedAvailability = selectedVariant?.availabilityStatus
+    ?? selectedColourway?.availabilityStatus
+    ?? product.availabilityStatus;
+  const selectionMessage = ambiguousVariant
+    ? "Variant selection unavailable"
+    : unavailable && selectedAvailability === "unknown"
+      ? "Availability unavailable"
+      : unavailable
+        ? "Currently out of stock"
+        : "Select all options to continue";
   const priceNaira = toNaira(displayPrice, displayCurrency);
 
   function handleAddToCart() {
@@ -177,7 +239,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
         selectedOptions: selectedVariant?.options.map((option) => ({ name: option.name, value: option.label })),
         title: product.title,
         brandName: product.brandName,
-        image: product.imageUrl,
+        image: selectedColourway?.primaryImage ?? product.imageUrl,
         priceNaira,
       },
       qty,
@@ -212,11 +274,11 @@ export function ProductInfo({ product, onColorChange }: Props) {
       <div>
         <div className="flex items-baseline gap-2">
           <span className="font-display text-3xl font-bold text-text-primary md:text-[38px]">
-            {formatNaira(toNaira(displayPrice, displayCurrency))}
+            {formattedDisplayPrice}
           </span>
-          {product.compareAtPriceAmount && product.compareAtPriceAmount > displayPrice && (
+          {compareAtPrice && compareAtPrice > displayPrice && formattedCompareAtPrice && (
             <span className="font-sans text-base text-text-muted line-through">
-              {formatNaira(toNaira(product.compareAtPriceAmount, product.priceCurrency))}
+              {formattedCompareAtPrice}
             </span>
           )}
           {product.tag && (
@@ -229,21 +291,72 @@ export function ProductInfo({ product, onColorChange }: Props) {
             </span>
           )}
         </div>
-        <p className="mt-1.5 font-sans text-xs text-text-muted md:text-sm">
-          Delivered to Nigeria in <span className="font-semibold text-text-primary">7–14 days</span> · price includes shipping &amp; KOI delivery
-        </p>
+        {displayPricing.featureEnabled ? (
+          <div className="mt-1.5 flex flex-col gap-0.5 font-sans text-xs text-text-muted md:text-sm">
+            <p>
+              Store price {formattedSourcePrice ?? displayPrice} {displayCurrency.toUpperCase()}
+            </p>
+            <p>
+              Delivered to Nigeria in <span className="font-semibold text-text-primary">7–14 days</span> · delivery calculated separately
+            </p>
+          </div>
+        ) : (
+          <p className="mt-1.5 font-sans text-xs text-text-muted md:text-sm">
+            International delivery is quoted separately after KOI receives, packages, and measures your item.
+          </p>
+        )}
       </div>
 
       {(product.colorName || product.category || product.availabilityStatus) && (
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-2xl bg-surface-secondary p-4 font-sans text-sm">
           {product.colorName && <><dt className="text-text-muted">Colour</dt><dd className="text-right font-medium text-text-primary">{product.colorName}</dd></>}
           {product.category && <><dt className="text-text-muted">Category</dt><dd className="text-right font-medium text-text-primary">{product.category}</dd></>}
-          {product.availabilityStatus && <><dt className="text-text-muted">Availability</dt><dd className="text-right font-medium text-text-primary">{product.available ? "In stock" : "Out of stock"}</dd></>}
+          {product.availabilityStatus && <><dt className="text-text-muted">Availability</dt><dd className="text-right font-medium text-text-primary">{availabilityLabel(selectedColourway ?? product)}</dd></>}
         </dl>
       )}
 
       {/* ── Colour selector ── */}
-      {colorOption && colorOption.values.length > 0 && (
+      {hasVerifiedColourways && (
+        <div className="flex flex-col gap-3">
+          <p className="font-sans text-sm font-medium text-text-primary">
+            Colour
+            {selectedColor && (
+              <span className="ml-1.5 font-normal text-text-secondary">— {selectedColor}</span>
+            )}
+          </p>
+
+          <div className="flex flex-wrap gap-2.5">
+            {colourways.map((colourway) => {
+              const active = selectedStyleColor === colourway.styleColor;
+              return (
+                <button
+                  key={colourway.styleColor}
+                  type="button"
+                  title={`${colourway.colour} (${colourway.styleColor})`}
+                  onClick={() => handleColourwaySelect(colourway)}
+                  aria-label={`${colourway.colour} (${colourway.styleColor})`}
+                  aria-pressed={active}
+                  className={`relative h-[52px] w-[52px] shrink-0 overflow-hidden rounded-[10px] border-2 transition-all duration-150 ${
+                    active
+                      ? "border-primary shadow-md scale-105"
+                      : "border-border hover:border-text-secondary"
+                  }`}
+                >
+                  <Image
+                    src={colourway.primaryImage}
+                    alt={colourway.colour}
+                    fill
+                    sizes="52px"
+                    className="object-cover"
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {!hasVerifiedColourways && colorOption && colorOption.values.length > 0 && (
         <div className="flex flex-col gap-3">
           <p className="font-sans text-sm font-medium text-text-primary">
             Colour
@@ -368,7 +481,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
               onClick={handleAddToCart}
               className="flex h-[58px] flex-1 items-center justify-center gap-2 rounded-2xl bg-primary font-display text-[17px] font-bold text-primary-foreground transition-all duration-150 hover:bg-primary-hover"
             >
-              Add to Cart · {formatNaira(priceNaira * qty)}
+              {displayPricing.featureEnabled ? "Add to Cart" : `Add to Cart · ${formatNaira(priceNaira * qty)}`}
             </button>
           </div>
         )}
@@ -383,7 +496,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
           {product.description || "No additional details available."}
         </p>
         <div className="flex flex-col gap-2.5">
-          {TRUST_FEATURES.map((feature) => (
+          {trustFeatures.map((feature) => (
             <div key={feature} className="flex items-start gap-2.5">
               <span className="shrink-0 font-sans text-sm font-black leading-[1.5] text-success">✓</span>
               <span className="font-sans text-[13px] leading-[1.5] text-text-secondary">{feature}</span>
@@ -457,7 +570,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
               onClick={handleAddToCart}
               className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl bg-primary font-display text-base font-bold text-primary-foreground transition-all duration-150 hover:bg-primary-hover"
             >
-              Add to Cart · {formatNaira(priceNaira * qty)}
+              {displayPricing.featureEnabled ? "Add to Cart" : `Add to Cart · ${formatNaira(priceNaira * qty)}`}
             </button>
           </div>
         )}

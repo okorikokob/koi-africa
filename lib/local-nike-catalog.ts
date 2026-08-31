@@ -78,6 +78,7 @@ function toProduct(entry: FixtureProduct): Product {
     colorImages,
     colorImageSets,
     priceAmount: productPrice,
+    compareAtPriceAmount: entry.product.sale_price_minor == null ? undefined : entry.product.price_minor / 100,
     priceCurrency: entry.product.currency,
     vendorName: "Nike",
     vendorUrl: entry.product.canonical_url,

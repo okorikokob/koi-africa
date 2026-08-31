@@ -7,6 +7,7 @@ import { Heart, Star, Truck, ShieldCheck } from "lucide-react";
 import type { Product } from "@/types";
 import { useCart } from "@/lib/cart-context";
 import { formatPriceAsNaira, toNaira } from "@/lib/currency";
+import { useDisplayCurrency } from "@/components/currency/DisplayCurrencyProvider";
 
 type Props = {
   product: Product;
@@ -42,9 +43,19 @@ function toProductHref(product: Product): string {
 
 export function ProductCard({ product }: Props) {
   const { addItem } = useCart();
+  const displayPricing = useDisplayCurrency();
   const [wished, setWished] = useState(false);
 
   const priceNaira = toNaira(product.priceAmount, product.priceCurrency);
+  const sourceCurrency = product.priceCurrency.toUpperCase();
+  const sourcePrice = displayPricing.formatSourcePrice(product.priceAmount, sourceCurrency);
+  const multiCurrencyPrice = displayPricing.formatPrice(product.priceAmount, sourceCurrency);
+  const renderedPrice = displayPricing.featureEnabled
+    ? multiCurrencyPrice ?? sourcePrice ?? `${product.priceAmount} ${sourceCurrency}`
+    : formatPriceAsNaira(product.priceAmount, product.priceCurrency);
+  const sourcePriceLabel = displayPricing.selectedCurrency === sourceCurrency
+    ? `Store price · ${sourceCurrency}`
+    : sourcePrice ? `${sourcePrice} ${sourceCurrency} store price` : `Store price · ${sourceCurrency}`;
 
   return (
     <Link
@@ -114,9 +125,16 @@ export function ProductCard({ product }: Props) {
         <div className="flex items-end justify-between gap-1">
           <div>
             <div className="text-sm font-black text-text-primary md:text-[17px]">
-              {formatPriceAsNaira(product.priceAmount, product.priceCurrency)}
+              {renderedPrice}
             </div>
-            <div className="mt-px text-[10px] text-text-muted md:text-[11px]">+ KOI delivery</div>
+            {displayPricing.featureEnabled ? (
+              <>
+                <div className="mt-px text-[10px] text-text-muted md:text-[11px]">{sourcePriceLabel}</div>
+                <div className="text-[10px] text-text-muted md:text-[11px]">Delivery calculated separately</div>
+              </>
+            ) : (
+              <div className="mt-px text-[10px] text-text-muted md:text-[11px]">+ KOI delivery</div>
+            )}
           </div>
           <button
             type="button"
@@ -134,7 +152,9 @@ export function ProductCard({ product }: Props) {
             }}
             className="flex-shrink-0 whitespace-nowrap rounded-lg bg-primary-soft px-2.5 py-1.5 text-[11px] font-extrabold text-primary transition-colors duration-150 hover:bg-primary hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 md:rounded-[10px] md:px-4 md:py-[9px] md:text-xs"
           >
-            {product.available === false ? "Sold out" : product.requiresVariantSelection || product.options?.length ? "Select" : "+ Add"}
+            {product.available === false
+              ? product.availabilityStatus === "unknown" ? "Unavailable" : "Sold out"
+              : product.requiresVariantSelection || product.options?.length ? "Select" : "+ Add"}
           </button>
         </div>
       </div>

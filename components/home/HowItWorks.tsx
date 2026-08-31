@@ -18,7 +18,7 @@ const STEPS = [
     icon: "💳",
     title: "Pay securely in naira",
     description:
-      "Checkout and pay in naira via Paystack. The price includes the product, shipping, and KOI's delivery fee. No dollar card needed.",
+      "Checkout and pay for your products in naira via Paystack. International delivery is quoted separately after KOI packages and measures your order.",
   },
   {
     icon: "📦",
