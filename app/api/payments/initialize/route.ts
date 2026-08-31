@@ -1,10 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { initializePaymentSchema } from "@/lib/schemas";
 import { getProductById } from "@/lib/catalog-db";
-import { calculateDeliveryFee } from "@/lib/pricing-config";
 import { toNaira } from "@/lib/currency";
 import { initializePayment, generatePaymentReference } from "@/lib/paystack";
+import { preflightPaymentItem } from "@/lib/payment-item-preflight";
+import { isConnectorRevalidationError } from "@/lib/connectors/types";
+import { nikePostgresReadsEnabled } from "@/lib/catalog-feature-flags";
+import { getNikePostgresProductById } from "@/lib/nike-postgres-catalog";
+import { preflightNikePostgresPayment } from "@/lib/nike-checkout-service";
+import { NikeCheckoutValidationError } from "@/lib/nike-checkout-validation";
+import { preflightPaymentCatalogItem } from "@/lib/payment-catalog-preflight";
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,7 +30,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Re-derive prices from the DB — never trust client-submitted amounts.
-    const products = await Promise.all(input.items.map((item) => getProductById(item.productId)));
+    const useNikePostgres = nikePostgresReadsEnabled();
+    const postgresNikeProducts = useNikePostgres
+      ? await Promise.all(input.items.map((item) => getNikePostgresProductById(item.productId)))
+      : input.items.map(() => null);
+    const products = await Promise.all(input.items.map((item, index) =>
+      postgresNikeProducts[index] ?? getProductById(item.productId)
+    ));
     const missingIndex = products.findIndex((p) => p === null);
     if (missingIndex !== -1) {
       return NextResponse.json(
@@ -33,31 +45,42 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const pricedItems = products.map((product, i) => {
+    const pricedItems = await Promise.all(products.map(async (product, i) => {
       const requestedVariantId = input.items[i].variantId;
-      const variant = requestedVariantId
-        ? product!.variants?.find((candidate) => candidate.id === requestedVariantId)
-        : undefined;
-      if (requestedVariantId && (!variant || !variant.available)) {
-        throw new Error(`Selected variant is no longer available for ${product!.title}.`);
-      }
-      const priceNaira = toNaira(variant?.price ?? product!.priceAmount, variant?.currency ?? product!.priceCurrency);
+      const isPostgresNike = useNikePostgres && postgresNikeProducts[i] !== null;
+      const preflight = await preflightPaymentCatalogItem(
+        { product: product!, requestedVariantId, usePostgresNike: isPostgresNike },
+        {
+          postgresNike: (productId, sourceVariantId) => preflightNikePostgresPayment(
+            productId,
+            sourceVariantId,
+            (task) => after(task),
+          ),
+          legacy: preflightPaymentItem,
+          missingNikeVariant: () => new NikeCheckoutValidationError(
+            "VARIANT_UNAVAILABLE",
+            "Select an exact Nike variant before checkout.",
+          ),
+        },
+      );
+      const priceNaira = toNaira(preflight.price, preflight.currency);
       return {
         productId: product!.id,
-        variantId: variant?.id ?? null,
-        sku: variant?.sku ?? null,
-        gtin: variant?.gtin ?? null,
-        selectedOptions: variant?.options.map((option) => ({ name: option.name, value: option.label })) ?? [],
+        variantId: preflight.variantId,
+        sku: preflight.sku,
+        gtin: preflight.gtin,
+        selectedOptions: preflight.selectedOptions,
         title: product!.title,
         vendorName: product!.vendorName,
         vendorUrl: product!.vendorUrl,
         priceNaira,
         qty: input.items[i].qty,
       };
-    });
+    }));
     const subtotalNaira = pricedItems.reduce((sum, item) => sum + item.priceNaira * item.qty, 0);
-    const deliveryFeeNaira = calculateDeliveryFee(subtotalNaira);
-    const totalNaira = subtotalNaira + deliveryFeeNaira;
+    // Launch pilot: the first payment covers products only. DHL/international
+    // delivery is quoted and collected separately after packaging and measuring.
+    const totalNaira = subtotalNaira;
 
     const reference = generatePaymentReference();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin;
@@ -76,7 +99,6 @@ export async function POST(req: NextRequest) {
         landmark: input.landmark ?? "",
         items: pricedItems,
         subtotalNaira,
-        deliveryFeeNaira,
         totalNaira,
       },
     });
@@ -84,9 +106,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: { authorizationUrl, reference } });
   } catch (error) {
     console.error("[api/payments/initialize]", error);
+    if (error instanceof NikeCheckoutValidationError) {
+      return NextResponse.json(
+        { success: false, code: error.code, error: error.message },
+        { status: error.code === "CATALOG_STALE" ? 409 : 400 },
+      );
+    }
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Something went wrong. Please try again." },
-      { status: error instanceof Error && error.message.includes("variant") ? 400 : 500 },
+      { status: isConnectorRevalidationError(error) || (error instanceof Error && error.message.includes("variant")) ? 400 : 500 },
     );
   }
 }

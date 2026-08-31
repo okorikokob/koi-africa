@@ -21,5 +21,10 @@ test("demo catalog exposes grouped products and exact purchasable variants", () 
   assert.ok(variant?.sku);
   assert.ok(variant?.gtin);
   assert.equal(getLocalNikeProductById(product.id)?.id, product.id);
+  const saleProduct = products.find((candidate) => candidate.compareAtPriceAmount != null);
+  assert.ok(saleProduct);
+  const compareAtPrice = saleProduct.compareAtPriceAmount;
+  assert.ok(compareAtPrice != null);
+  assert.ok(compareAtPrice > saleProduct.priceAmount);
   delete process.env.USE_LOCAL_NIKE_CATALOG;
 });

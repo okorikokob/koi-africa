@@ -30,7 +30,7 @@ const FAQS: FaqItem[] = [
     category: "pay",
     question: "How is the naira price calculated?",
     answer:
-      "The price shown includes the product's cost, currency conversion, international shipping, and KOI's delivery fee — all in one number, with nothing added later.",
+      "The first payment covers your products in naira. International delivery is quoted and collected separately after KOI receives, packages, and measures your order.",
   },
   {
     icon: "🏷️",

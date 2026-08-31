@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import localFont from "next/font/local";
 import { CartProvider } from "@/lib/cart-context";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { DisplayCurrencyProvider } from "@/components/currency/DisplayCurrencyProvider";
+import { loadDisplayCurrencyConfiguration } from "@/lib/display-currency-server";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -23,11 +25,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const displayCurrencyConfiguration = await loadDisplayCurrencyConfiguration();
   return (
     <html
       lang="en"
@@ -37,9 +40,11 @@ export default function RootLayout({
         suppressHydrationWarning
         className="min-h-full flex flex-col bg-background font-sans text-text-primary"
       >
-        <CartProvider>
-          <SiteChrome>{children}</SiteChrome>
-        </CartProvider>
+        <DisplayCurrencyProvider configuration={displayCurrencyConfiguration}>
+          <CartProvider>
+            <SiteChrome>{children}</SiteChrome>
+          </CartProvider>
+        </DisplayCurrencyProvider>
       </body>
     </html>
   );

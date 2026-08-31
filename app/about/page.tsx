@@ -27,7 +27,7 @@ const VALUES = [
     icon: CreditCard,
     title: "Transparent pricing",
     description:
-      "One naira price at checkout covers the product, international shipping, and our fee. No surprise costs on delivery.",
+      "Pay for products in naira at checkout. International delivery is quoted separately after packaging and measurement.",
   },
   {
     icon: Package,
@@ -48,7 +48,7 @@ const STEPS = [
   },
   {
     title: "Pay securely in naira",
-    description: "Checkout via Paystack. The price includes product, shipping, and delivery fee.",
+    description: "Checkout for your products via Paystack. International delivery is quoted separately after packaging and measurement.",
   },
   {
     title: "We deliver to your door",

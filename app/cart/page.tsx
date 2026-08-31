@@ -5,11 +5,9 @@ import Image from "next/image";
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatNaira } from "@/lib/currency";
-import { calculateDeliveryFee } from "@/lib/pricing-config";
 
 export default function CartPage() {
   const { items, totalNaira, removeItem, setQty } = useCart();
-  const deliveryFee = calculateDeliveryFee(totalNaira);
 
   if (items.length === 0) {
     return (
@@ -109,16 +107,15 @@ export default function CartPage() {
             <span>Subtotal</span>
             <span className="font-semibold text-text-primary">{formatNaira(totalNaira)}</span>
           </div>
-          <div className="flex items-center justify-between py-2 font-sans text-sm text-text-secondary">
-            <span>Delivery fee</span>
-            <span className="font-semibold text-text-primary">{formatNaira(deliveryFee)}</span>
-          </div>
           <div className="mt-2 flex items-center justify-between border-t border-border py-4">
             <span className="font-sans text-sm font-semibold text-text-primary">Total</span>
             <span className="font-display text-xl font-black text-text-primary">
-              {formatNaira(totalNaira + deliveryFee)}
+              {formatNaira(totalNaira)}
             </span>
           </div>
+          <p className="mb-4 font-sans text-xs leading-relaxed text-text-muted">
+            International delivery is quoted separately after KOI receives, packages, and measures your items.
+          </p>
           <Link
             href="/checkout"
             className="flex w-full items-center justify-center rounded-button bg-primary py-4 font-sans text-base font-extrabold text-primary-foreground transition-all hover:-translate-y-px hover:bg-primary-hover hover:shadow-md"

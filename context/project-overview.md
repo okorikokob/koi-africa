@@ -22,8 +22,8 @@ Shopping from global brands in Nigeria is hard: foreign currency, no local deliv
 1. Customer browses brands and products on KOI
 2. Customer adds items to cart on KOI (size, color, quantity)
 3. Customer fills in delivery details (name, address, phone)
-4. Customer pays FULL price in naira via Paystack on KOI
-   — price = product cost converted to naira + KOI delivery margin
+4. Customer pays the product subtotal in naira via Paystack on KOI
+   — international delivery is quoted and collected separately after KOI packages and measures the item
 5. KOI receives the order, purchases the item from the vendor
 6. KOI ships internationally and delivers to the customer's door
 ```
@@ -39,7 +39,7 @@ All prices on KOI are displayed and charged in naira:
 - GBP × 2,000 = NGN
 - EUR × 1,700 = NGN
 
-KOI adds a delivery/service margin on top of the converted price. The total the customer pays covers the product cost, currency conversion, international shipping, local delivery, and KOI's margin.
+For the launch pilot, the first payment covers the converted product subtotal only. International delivery is quoted and collected separately after KOI receives, packages, and measures the item. No service-fee percentage is applied until the business confirms it.
 
 Exchange rate is stored as a config value — never hardcoded in components.
 

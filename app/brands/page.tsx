@@ -17,7 +17,7 @@ function localFallbackSummaries(brands: typeof FEATURED_BRANDS): BrandSummary[] 
 
 export default async function BrandsPage() {
   const brands = [...FEATURED_BRANDS, ...getLocalCatalogBrands()];
-  const localDemoEnabled = process.env.USE_LOCAL_NIKE_CATALOG === "true" || process.env.USE_LOCAL_HM_CATALOG === "true" || process.env.USE_LOCAL_SEPHORA_CATALOG === "true";
+  const localDemoEnabled = process.env.USE_LOCAL_NIKE_CATALOG === "true" || process.env.USE_LOCAL_HM_CATALOG === "true" || process.env.USE_LOCAL_SEPHORA_CATALOG === "true" || process.env.USE_LOCAL_PUMA_CATALOG === "true";
   const summaries = localDemoEnabled
     ? await Promise.race([
         getBrandSummaries(brands),

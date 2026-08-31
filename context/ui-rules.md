@@ -77,7 +77,7 @@ Never use colored card backgrounds. Color goes inside the card via text, badges,
 
 - Image on top, fixed aspect ratio (e.g. 4:5), `object-cover`, rounded to match the card.
 - Below image: brand name (caption, `text-text-secondary`), product title (Body Small/Regular, `text-text-primary`, max 2 lines), price.
-- Price shows the vendor's price in its original currency with a small label like "+ KOI delivery" so customers understand KOI adds a delivery fee, not the product price.
+- Price shows the product amount clearly and states that international delivery is quoted separately after packaging and measurement.
 - Whole card is clickable → product detail page.
 - Hover: subtle lift (shadow sm → md) over 250ms. No dramatic scaling.
 

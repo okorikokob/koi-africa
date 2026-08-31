@@ -49,7 +49,7 @@ Full page UI built with mock data first — verified visually — then wire func
 **What to build:**
 - /checkout page — two sections: delivery details form + order summary
 - Delivery form: full name, email, WhatsApp number, street address, city, state (Nigerian states dropdown), landmark (optional)
-- Order summary: itemised cart, subtotal, delivery fee, total in naira
+- Order summary: itemised cart and product subtotal in naira; delivery quoted separately after packaging and measurement
 - Zod validation on all fields
 - "Place Order & Pay" button triggers Paystack
 
@@ -60,7 +60,7 @@ Full page UI built with mock data first — verified visually — then wire func
 - POST /api/payments/verify — server-side verification
 - On success: create order + order_items in InsForge, clear cart, redirect to /order/success
 - On failure: show error, keep cart intact
-- Amount = sum of (product naira price × qty) + delivery fee
+- Launch-pilot amount = sum of (authoritative product naira price × qty); delivery is collected separately
 
 ### 12 Order Confirmation + Tracking
 **What to build:**
@@ -151,7 +151,7 @@ Full page UI built with mock data first — verified visually — then wire func
 
 ## Invariants (Chowdeck Model)
 
-- Paystack is ALWAYS charged the full naira amount — never just a delivery fee
+- The first Paystack payment charges the authoritative product subtotal only; delivery is a separate later payment
 - An order is ONLY created after Paystack verification succeeds server-side
 - Never trust the client redirect alone — always verify with Paystack secret key
 - Order status starts at "confirmed" (not "submitted") — because payment is taken at creation

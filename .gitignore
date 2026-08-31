@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/artifacts/
+/data/zyte-zara-qualification.json
 
 # next.js
 /.next/

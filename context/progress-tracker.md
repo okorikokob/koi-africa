@@ -50,7 +50,7 @@ Update this file after every completed feature.
 - **Business model:** Chowdeck — customer pays KOI full price in naira, KOI buys from vendor
 - **Product source:** Shopify Global Catalog API only — synced to InsForge DB
 - **Naira conversion:** USD × 1600, GBP × 2000, EUR × 1700 — stored in config not hardcoded
-- **Payment:** Paystack charges FULL amount (product + delivery margin) — not just delivery fee
+- **Payment:** launch-pilot first payment charges the authoritative product subtotal; international delivery is quoted and collected separately
 - **Order creation:** Only after Paystack server-side verification succeeds
 - **No self-report form:** The old OrderForm (redirect model) is removed
 - **Cart persistence:** localStorage
@@ -58,7 +58,7 @@ Update this file after every completed feature.
 
 ## Open Decisions
 
-1. Delivery margin — currently a placeholder (flat ₦10,000 + 5% of subtotal, see lib/pricing-config.ts). Confirm real number with boss.
+1. KOI service-fee percentage — intentionally not implemented until the business confirms the percentage.
 2. ~~Nigerian states list~~ — resolved: all 36 states + FCT implemented in lib/nigeria-states.ts.
 3. Domain — boss has purchased koiafrica.com; connect to Vercel (not blocking, can do anytime).
 4. Returns policy — depends on which logistics partners KOI signs with; /returns page currently says "pending" rather than stating a policy.
@@ -70,6 +70,7 @@ Update this file after every completed feature.
 
 ## Notes
 
+- Nike now has the first reusable official-source connector boundary: the existing normalized local JSON remains the catalogue source, while payment initialization performs provider-agnostic, fail-closed live variant revalidation before Paystack. Production Nike payments remain blocked until Bright Data live-source credentials and the Nike dataset ID are configured.
 - useCart hook and CartDrawer already exist and work
 - Add to Cart wired on ProductCard and ProductDetail
 - Old OrderForm (self-report model) should be removed or ignored — not part of Chowdeck model

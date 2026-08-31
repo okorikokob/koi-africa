@@ -45,8 +45,8 @@ export default function TermsPage() {
               <LegalSection id="lt-2" number={2} title="Pricing and payment">
                 <p>
                   All prices are shown and charged in Nigerian naira. The price you pay at
-                  checkout includes the product cost, currency conversion, shipping, and KOI&apos;s
-                  delivery margin. Payment is processed by Paystack, and your order is only
+                  checkout covers the product cost and currency conversion. International delivery
+                  is quoted separately after KOI packages and measures the item. Payment is processed by Paystack, and your order is only
                   confirmed once payment is verified.
                 </p>
               </LegalSection>
