@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { NikeCatalogReadRow } from "@/database/repositories/nikeCatalogReadRepository";
 import { nikePostgresReadsEnabled } from "@/lib/catalog-feature-flags";
+import { isPostgresUuid } from "@/lib/postgres-identifiers";
 import {
   mapNikePostgresProduct,
   NikePostgresCatalogReader,
@@ -235,4 +236,13 @@ test("keeps PostgreSQL Nike reads disabled unless explicitly true", () => {
   assert.equal(nikePostgresReadsEnabled({}), false);
   assert.equal(nikePostgresReadsEnabled({ KOI_NIKE_POSTGRES_READS: "false" }), false);
   assert.equal(nikePostgresReadsEnabled({ KOI_NIKE_POSTGRES_READS: "true" }), true);
+});
+
+test("only routes PostgreSQL UUID identities into the Nike database lookup", () => {
+  assert.equal(isPostgresUuid("9810eb6a-e084-4cf1-a6c5-aeb0274890c8"), true);
+  assert.equal(isPostgresUuid("06a231e8-425d-5561-a802-3ed21ac57516"), true);
+  assert.equal(isPostgresUuid("local-nike-jxmxgh"), false);
+  assert.equal(isPostgresUuid("local-sephora-p107319"), false);
+  assert.equal(isPostgresUuid("product-uuid"), false);
+  assert.equal(isPostgresUuid(""), false);
 });

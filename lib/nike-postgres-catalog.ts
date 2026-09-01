@@ -1,6 +1,7 @@
 import { db } from "@/database/client";
 import { NikeCatalogReadRepository } from "@/database/repositories/nikeCatalogReadRepository";
 import { NikePostgresCatalogReader } from "@/lib/nike-postgres-product-mapper";
+import { isPostgresUuid } from "@/lib/postgres-identifiers";
 import type { Product } from "@/types";
 
 const repository = new NikeCatalogReadRepository(db);
@@ -11,6 +12,7 @@ export async function getNikePostgresProducts(): Promise<Product[]> {
 }
 
 export async function getNikePostgresProductById(id: string): Promise<Product | null> {
+  if (!isPostgresUuid(id)) return null;
   return reader.findProductById(id);
 }
 
