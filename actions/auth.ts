@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { getAuthActions } from "@/lib/insforge-auth";
+import { signInAdmin, signOutAdmin } from "@/lib/admin-auth";
 
 export type LoginState = { error: string | null };
 
@@ -17,9 +17,8 @@ export async function loginAction(
   }
 
   try {
-    const auth = await getAuthActions();
-    const { error } = await auth.signInWithPassword({ email, password });
-    if (error) {
+    const user = await signInAdmin(email, password, formData.get("remember") === "on");
+    if (!user) {
       return { error: "Invalid email or password." };
     }
   } catch (err) {
@@ -31,7 +30,6 @@ export async function loginAction(
 }
 
 export async function logoutAction() {
-  const auth = await getAuthActions();
-  await auth.signOut();
+  await signOutAdmin();
   redirect("/admin/login");
 }

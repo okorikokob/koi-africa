@@ -1,5 +1,5 @@
 export const ORDER_STATUSES = [
-  "submitted",
+  "pending_quote",
   "awaiting_payment",
   "paid",
   "sourcing",
@@ -11,7 +11,7 @@ export const ORDER_STATUSES = [
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
-  submitted: "Submitted",
+  pending_quote: "Pending logistics",
   awaiting_payment: "Awaiting payment",
   paid: "Paid",
   sourcing: "Sourcing",
@@ -25,7 +25,7 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 // deliberate light-to-dark blue progression — the deeper the blue, the closer
 // to delivered — rather than three arbitrary unrelated hues.
 export const ORDER_STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
-  submitted: "bg-surface-secondary text-text-primary",
+  pending_quote: "bg-surface-secondary text-text-primary",
   awaiting_payment: "bg-warning/10 text-warning",
   paid: "bg-accent-blue/15 text-primary-hover",
   sourcing: "bg-info/10 text-info",
@@ -37,7 +37,7 @@ export const ORDER_STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
 // Same mapping as raw hex, for contexts (charts, dots) that can't take a
 // Tailwind class — e.g. recharts fill props.
 export const ORDER_STATUS_HEX: Record<OrderStatus, string> = {
-  submitted: "#8f8f88",
+  pending_quote: "#8f8f88",
   awaiting_payment: "#f5a524",
   paid: "#5ba3ff",
   sourcing: "#0091ff",

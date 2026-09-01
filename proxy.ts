@@ -1,24 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "@insforge/sdk/ssr";
+import { ADMIN_SESSION_COOKIE } from "@/lib/admin-auth-constants";
 
 export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname === "/admin/login") {
     return NextResponse.next();
   }
 
-  const response = NextResponse.next();
-  const { accessToken } = await updateSession({
-    baseUrl: process.env.NEXT_PUBLIC_INSFORGE_URL!,
-    anonKey: process.env.NEXT_PUBLIC_INSFORGE_ANON_KEY!,
-    requestCookies: { get: (name: string) => request.cookies.get(name) },
-    responseCookies: response.cookies,
-  });
-
-  if (!accessToken) {
+  if (!request.cookies.get(ADMIN_SESSION_COOKIE)?.value) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
-
-  return response;
+  return NextResponse.next();
 }
 
 export const config = {

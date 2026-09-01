@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createInsforgeServer } from "@/lib/insforge-server";
+import { adminOrderRepository } from "@/database/repositories/adminOrderRepository";
 import { formatNaira } from "@/lib/currency";
 import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
@@ -11,42 +11,16 @@ import {
 } from "@/lib/shipping";
 import { avatarClass, initials } from "@/lib/admin-ui";
 
-type OrderRow = {
-  id: string;
-  reference: string;
-  customer_name: string;
-  customer_email: string;
-  delivery_city: string;
-  delivery_state: string;
-  total_naira: number;
-  status: OrderStatus;
-  created_at: string;
-};
-
 type Props = {
   searchParams: Promise<{ status?: string; q?: string }>;
 };
 
 export default async function AdminOrdersPage({ searchParams }: Props) {
   const { status, q } = await searchParams;
-  const insforge = createInsforgeServer();
-
-  let query = insforge.database
-    .from("orders")
-    .select(
-      "id, reference, customer_name, customer_email, delivery_city, delivery_state, total_naira, status, created_at",
-    )
-    .order("created_at", { ascending: false });
-
-  if (status && (ORDER_STATUSES as readonly string[]).includes(status)) {
-    query = query.eq("status", status);
-  }
-  if (q) {
-    query = query.or(`reference.ilike.%${q}%,customer_email.ilike.%${q}%`);
-  }
-
-  const { data } = await query;
-  const orders = (data ?? []) as OrderRow[];
+  const selectedStatus = status && (ORDER_STATUSES as readonly string[]).includes(status)
+    ? status as OrderStatus
+    : undefined;
+  const orders = await adminOrderRepository.list({ status: selectedStatus, query: q });
 
   const filters: { key: string; label: string; restClass: string }[] = [
     { key: "", label: "All", restClass: "border-border bg-surface text-text-secondary" },
@@ -115,9 +89,9 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
               className="flex items-start gap-3 py-4"
             >
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-sans text-[11px] font-extrabold ${avatarClass(order.customer_name)}`}
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-sans text-[11px] font-extrabold ${avatarClass(order.customerName)}`}
               >
-                {initials(order.customer_name)}
+                {initials(order.customerName)}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
@@ -125,19 +99,19 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                     {order.reference}
                   </p>
                   <p className="shrink-0 font-sans text-sm font-semibold text-text-primary">
-                    {formatNaira(order.total_naira)}
+                    {formatNaira(order.totalMinor / 100)}
                   </p>
                 </div>
                 <p className="truncate font-sans text-xs text-text-muted">
-                  {order.customer_name} · {order.customer_email}
+                  {order.customerName} · {order.customerEmail}
                 </p>
                 <p className="mt-0.5 font-sans text-xs text-text-muted">
-                  {order.delivery_city}, {order.delivery_state}
+                  {order.deliveryCity}, {order.deliveryRegion}
                 </p>
                 <div className="mt-2 flex items-center justify-between">
                   <OrderStatusBadge status={order.status} />
                   <p className="font-sans text-xs text-text-secondary">
-                    {new Date(order.created_at).toLocaleDateString("en-NG", {
+                    {order.createdAt.toLocaleDateString("en-NG", {
                       month: "short",
                       day: "numeric",
                     })}
@@ -182,31 +156,31 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                   <td className="py-4 pr-3.5">
                     <div className="flex items-center gap-2.5">
                       <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-sans text-[11px] font-extrabold ${avatarClass(order.customer_name)}`}
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-sans text-[11px] font-extrabold ${avatarClass(order.customerName)}`}
                       >
-                        {initials(order.customer_name)}
+                          {initials(order.customerName)}
                       </div>
                       <div>
                         <p className="font-sans text-sm font-medium text-text-primary">
-                          {order.customer_name}
+                            {order.customerName}
                         </p>
                         <p className="font-sans text-[11px] text-text-muted">
-                          {order.customer_email}
+                            {order.customerEmail}
                         </p>
                       </div>
                     </div>
                   </td>
                   <td className="py-4 pr-3.5 font-sans text-sm text-text-secondary">
-                    {order.delivery_city}, {order.delivery_state}
+                    {order.deliveryCity}, {order.deliveryRegion}
                   </td>
                   <td className="py-4 pr-3.5 font-sans text-sm font-semibold text-text-primary">
-                    {formatNaira(order.total_naira)}
+                    {formatNaira(order.totalMinor / 100)}
                   </td>
                   <td className="py-4 pr-3.5">
                     <OrderStatusBadge status={order.status} />
                   </td>
                   <td className="py-4 pr-3.5 font-sans text-sm text-text-secondary">
-                    {new Date(order.created_at).toLocaleDateString("en-NG", {
+                    {order.createdAt.toLocaleDateString("en-NG", {
                       month: "short",
                       day: "numeric",
                     })}
