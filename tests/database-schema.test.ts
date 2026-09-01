@@ -120,6 +120,20 @@ test("commerce records use immutable snapshots and provider idempotency", () => 
   assert.ok(columnNames(payments).includes("purpose"));
   assert.ok(columnNames(orders).includes("service_fee_minor"));
   assert.deepEqual(
+    [
+      "logistics_deposit_minor", "actual_logistics_minor", "logistics_adjustment_minor",
+      "logistics_reconciliation_status",
+    ].filter((name) => !columnNames(orders).includes(name)),
+    [],
+  );
+  assert.deepEqual(
+    [
+      "source_currency", "source_unit_price_minor", "acquisition_unit_minor",
+      "service_margin_unit_minor", "selling_unit_minor", "exchange_rate_snapshot",
+    ].filter((name) => !columnNames(orderItems).includes(name)),
+    [],
+  );
+  assert.deepEqual(
     ["order_id", "shipping_quote_id", "purpose", "amount_minor", "pricing_snapshot"]
       .filter((name) => !columnNames(paymentRequests).includes(name)),
     [],

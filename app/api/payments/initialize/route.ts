@@ -11,6 +11,11 @@ import { getNikePostgresProductById } from "@/lib/nike-postgres-catalog";
 import { preflightNikePostgresPayment } from "@/lib/nike-checkout-service";
 import { NikeCheckoutValidationError } from "@/lib/nike-checkout-validation";
 import { preflightPaymentCatalogItem } from "@/lib/payment-catalog-preflight";
+import { loadLatestDisplayRateSnapshot } from "@/lib/display-currency-server";
+import {
+  calculateNikeOrderPricing,
+  calculateNikeUnitPricing,
+} from "@/lib/nike-pricing";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,6 +50,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const hasPostgresNike = postgresNikeProducts.some((product) => product !== null);
+    const exchangeRateSnapshot = hasPostgresNike ? await loadLatestDisplayRateSnapshot() : null;
+    if (hasPostgresNike && !exchangeRateSnapshot) {
+      throw new Error("Nike checkout exchange rates are not configured.");
+    }
+
     const pricedItems = await Promise.all(products.map(async (product, i) => {
       const requestedVariantId = input.items[i].variantId;
       const isPostgresNike = useNikePostgres && postgresNikeProducts[i] !== null;
@@ -63,7 +74,16 @@ export async function POST(req: NextRequest) {
           ),
         },
       );
-      const priceNaira = toNaira(preflight.price, preflight.currency);
+      const nikePricing = isPostgresNike
+        ? calculateNikeUnitPricing({
+            sourcePrice: preflight.price,
+            sourceCurrency: preflight.currency,
+            exchangeRateSnapshot: exchangeRateSnapshot!,
+          })
+        : null;
+      const acquisitionUnitMinor = nikePricing?.acquisitionUnitMinor
+        ?? Math.round(toNaira(preflight.price, preflight.currency) * 100);
+      const sellingUnitMinor = nikePricing?.sellingUnitMinor ?? acquisitionUnitMinor;
       return {
         productId: product!.id,
         variantId: preflight.variantId,
@@ -73,21 +93,36 @@ export async function POST(req: NextRequest) {
         title: product!.title,
         vendorName: product!.vendorName,
         vendorUrl: product!.vendorUrl,
-        priceNaira,
+        sourceCurrency: nikePricing?.sourceCurrency ?? preflight.currency.toUpperCase(),
+        sourceUnitPriceMinor: nikePricing?.sourceUnitPriceMinor ?? Math.round(preflight.price * 100),
+        acquisitionUnitMinor,
+        serviceMarginUnitMinor: nikePricing?.serviceMarginUnitMinor ?? 0,
+        sellingUnitMinor,
+        exchangeRateSnapshot: nikePricing?.exchangeRateSnapshot ?? null,
         qty: input.items[i].qty,
       };
     }));
-    const subtotalNaira = pricedItems.reduce((sum, item) => sum + item.priceNaira * item.qty, 0);
-    // Launch pilot: the first payment covers products only. DHL/international
-    // delivery is quoted and collected separately after packaging and measuring.
-    const totalNaira = subtotalNaira;
+    const nikeOrderPricing = hasPostgresNike
+      ? calculateNikeOrderPricing(pricedItems.map((item) => ({
+          acquisitionUnitMinor: item.acquisitionUnitMinor,
+          serviceMarginUnitMinor: item.serviceMarginUnitMinor,
+          sellingUnitMinor: item.sellingUnitMinor,
+          quantity: item.qty,
+        })))
+      : null;
+    const acquisitionSubtotalMinor = nikeOrderPricing?.acquisitionSubtotalMinor
+      ?? pricedItems.reduce((sum, item) => sum + item.acquisitionUnitMinor * item.qty, 0);
+    const serviceMarginMinor = nikeOrderPricing?.serviceMarginMinor ?? 0;
+    const sellingSubtotalMinor = nikeOrderPricing?.sellingSubtotalMinor ?? acquisitionSubtotalMinor;
+    const logisticsDepositMinor = nikeOrderPricing?.logisticsDepositMinor ?? 0;
+    const firstPaymentTotalMinor = nikeOrderPricing?.firstPaymentTotalMinor ?? sellingSubtotalMinor;
 
     const reference = generatePaymentReference();
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? req.nextUrl.origin;
 
     const { authorizationUrl } = await initializePayment({
       email: input.email,
-      amountNaira: totalNaira,
+      amountMinor: firstPaymentTotalMinor,
       reference,
       callbackUrl: `${siteUrl}/checkout/success?reference=${reference}`,
       metadata: {
@@ -98,12 +133,32 @@ export async function POST(req: NextRequest) {
         state: input.state,
         landmark: input.landmark ?? "",
         items: pricedItems,
-        subtotalNaira,
-        totalNaira,
+        acquisitionSubtotalMinor,
+        serviceMarginMinor,
+        sellingSubtotalMinor,
+        logisticsDepositMinor,
+        customsTotalMinor: 0,
+        firstPaymentTotalMinor,
+        exchangeRateSnapshot,
       },
     });
 
-    return NextResponse.json({ success: true, data: { authorizationUrl, reference } });
+    return NextResponse.json({
+      success: true,
+      data: {
+        authorizationUrl,
+        reference,
+        pricing: {
+          currency: "NGN",
+          acquisitionSubtotalMinor,
+          serviceMarginMinor,
+          sellingSubtotalMinor,
+          logisticsDepositMinor,
+          customsTotalMinor: 0,
+          firstPaymentTotalMinor,
+        },
+      },
+    });
   } catch (error) {
     console.error("[api/payments/initialize]", error);
     if (error instanceof NikeCheckoutValidationError) {

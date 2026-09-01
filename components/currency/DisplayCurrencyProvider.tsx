@@ -2,12 +2,16 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
+  convertMinorUnits,
+  formatCurrencyMinor,
   formatConvertedPrice,
   formatSourcePrice,
   normalizeDisplayCurrency,
   type DisplayCurrencyConfiguration,
   type SupportedDisplayCurrency,
 } from "@/lib/display-currency";
+import { toNaira } from "@/lib/currency";
+import { calculatePercentageMinor, KOI_NIKE_MARGIN_BASIS_POINTS } from "@/lib/nike-pricing";
 
 type DisplayCurrencyContextValue = {
   featureEnabled: boolean;
@@ -16,6 +20,11 @@ type DisplayCurrencyContextValue = {
   setSelectedCurrency: (currency: SupportedDisplayCurrency) => void;
   formatPrice: (amount: number, sourceCurrency: string) => string | null;
   formatSourcePrice: (amount: number, sourceCurrency: string) => string | null;
+  formatMinorPrice: (amountMinor: number, sourceCurrency: string) => string | null;
+  nikeSellingPrice: (amount: number, sourceCurrency: string) => {
+    sellingMinorNgn: number;
+    formatted: string;
+  };
 };
 
 type Props = {
@@ -70,6 +79,29 @@ export function DisplayCurrencyProvider({ configuration, children }: Props) {
       });
     },
     formatSourcePrice,
+    formatMinorPrice: (amountMinor, sourceCurrency) => {
+      if (!configuration.snapshot) return null;
+      const converted = convertMinorUnits(amountMinor, sourceCurrency, selectedCurrency, configuration.snapshot);
+      return converted === null ? null : formatCurrencyMinor(converted, selectedCurrency);
+    },
+    nikeSellingPrice: (amount, sourceCurrency) => {
+      const sourceMinor = Math.round(amount * 100);
+      const convertedAcquisition = configuration.snapshot
+        ? convertMinorUnits(sourceMinor, sourceCurrency, "NGN", configuration.snapshot)
+        : null;
+      const acquisitionMinor = convertedAcquisition ?? Math.round(toNaira(amount, sourceCurrency) * 100);
+      const sellingMinorNgn = acquisitionMinor
+        + calculatePercentageMinor(acquisitionMinor, KOI_NIKE_MARGIN_BASIS_POINTS);
+      const selectedMinor = configuration.snapshot
+        ? convertMinorUnits(sellingMinorNgn, "NGN", selectedCurrency, configuration.snapshot)
+        : null;
+      return {
+        sellingMinorNgn,
+        formatted: selectedMinor === null
+          ? formatCurrencyMinor(sellingMinorNgn, "NGN")
+          : formatCurrencyMinor(selectedMinor, selectedCurrency),
+      };
+    },
   }), [configuration.featureEnabled, configuration.snapshot, conversionAvailable, selectCurrency, selectedCurrency]);
 
   return (

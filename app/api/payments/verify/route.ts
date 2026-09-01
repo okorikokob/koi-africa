@@ -19,8 +19,13 @@ type OrderMetadata = {
   state: string;
   landmark?: string;
   items: PaidItemInput[];
-  subtotalNaira: number;
-  totalNaira: number;
+  acquisitionSubtotalMinor: number;
+  serviceMarginMinor: number;
+  sellingSubtotalMinor: number;
+  logisticsDepositMinor: number;
+  customsTotalMinor: number;
+  firstPaymentTotalMinor: number;
+  exchangeRateSnapshot: Record<string, unknown> | null;
 };
 
 const store = new DrizzleVerifiedPurchaseStore(db);
@@ -57,7 +62,7 @@ export async function POST(req: NextRequest) {
         { status: 500 },
       );
     }
-    if (Math.round(result.amountNaira * 100) !== Math.round(metadata.totalNaira * 100)) {
+    if (result.amountMinor !== metadata.firstPaymentTotalMinor) {
       return NextResponse.json({ success: false, error: "Payment amount mismatch." }, { status: 402 });
     }
 
@@ -72,8 +77,13 @@ export async function POST(req: NextRequest) {
         deliveryCity: metadata.city,
         deliveryRegion: metadata.state,
         deliveryLandmark: metadata.landmark || null,
-        subtotalNaira: metadata.subtotalNaira,
-        totalNaira: metadata.totalNaira,
+        acquisitionSubtotalMinor: metadata.acquisitionSubtotalMinor,
+        serviceMarginMinor: metadata.serviceMarginMinor,
+        sellingSubtotalMinor: metadata.sellingSubtotalMinor,
+        logisticsDepositMinor: metadata.logisticsDepositMinor,
+        customsTotalMinor: metadata.customsTotalMinor,
+        firstPaymentTotalMinor: metadata.firstPaymentTotalMinor,
+        exchangeRateSnapshot: metadata.exchangeRateSnapshot,
         channel: result.channel,
         items: metadata.items,
       }, store);

@@ -11,7 +11,12 @@ export type PaidItemInput = {
   title: string;
   vendorName: string;
   vendorUrl: string;
-  priceNaira: number;
+  sourceCurrency: string;
+  sourceUnitPriceMinor: number;
+  acquisitionUnitMinor: number;
+  serviceMarginUnitMinor: number;
+  sellingUnitMinor: number;
+  exchangeRateSnapshot: Record<string, unknown> | null;
   qty: number;
 };
 
@@ -25,8 +30,13 @@ export type VerifiedPurchaseInput = {
   deliveryCity: string;
   deliveryRegion: string;
   deliveryLandmark: string | null;
-  subtotalNaira: number;
-  totalNaira: number;
+  acquisitionSubtotalMinor: number;
+  serviceMarginMinor: number;
+  sellingSubtotalMinor: number;
+  logisticsDepositMinor: number;
+  customsTotalMinor: number;
+  firstPaymentTotalMinor: number;
+  exchangeRateSnapshot: Record<string, unknown> | null;
   channel: string;
   items: PaidItemInput[];
 };
@@ -54,10 +64,9 @@ export interface VerifiedPurchaseStore {
   isProviderReferenceConflict(error: unknown): boolean;
 }
 
-function toMinor(amount: number): number {
-  const minor = Math.round(amount * 100);
-  if (!Number.isSafeInteger(minor) || minor < 0) throw new Error("Payment contains an invalid amount.");
-  return minor;
+function assertMinor(amount: number, label: string): number {
+  if (!Number.isSafeInteger(amount) || amount < 0) throw new Error(`${label} is not valid minor-unit money.`);
+  return amount;
 }
 
 export async function persistVerifiedPurchase(
@@ -67,11 +76,22 @@ export async function persistVerifiedPurchase(
   const existing = await store.findByProviderReference(input.providerReference);
   if (existing) return existing;
 
-  const subtotalMinor = toMinor(input.subtotalNaira);
-  const totalMinor = toMinor(input.totalNaira);
-  const itemTotalMinor = input.items.reduce((sum, item) => sum + toMinor(item.priceNaira) * item.qty, 0);
-  if (subtotalMinor !== itemTotalMinor || totalMinor !== subtotalMinor) {
-    throw new Error("Verified payment amount does not match the authoritative item subtotal.");
+  const acquisitionSubtotalMinor = assertMinor(input.acquisitionSubtotalMinor, "Acquisition subtotal");
+  const serviceMarginMinor = assertMinor(input.serviceMarginMinor, "Service margin");
+  const sellingSubtotalMinor = assertMinor(input.sellingSubtotalMinor, "Selling subtotal");
+  const logisticsDepositMinor = assertMinor(input.logisticsDepositMinor, "Logistics deposit");
+  const firstPaymentTotalMinor = assertMinor(input.firstPaymentTotalMinor, "First payment total");
+  const itemAcquisitionMinor = input.items.reduce((sum, item) => sum + assertMinor(item.acquisitionUnitMinor, "Item acquisition") * item.qty, 0);
+  const itemMarginMinor = input.items.reduce((sum, item) => sum + assertMinor(item.serviceMarginUnitMinor, "Item margin") * item.qty, 0);
+  const itemSellingMinor = input.items.reduce((sum, item) => sum + assertMinor(item.sellingUnitMinor, "Item selling price") * item.qty, 0);
+  if (
+    acquisitionSubtotalMinor !== itemAcquisitionMinor
+    || serviceMarginMinor !== itemMarginMinor
+    || sellingSubtotalMinor !== itemSellingMinor
+    || sellingSubtotalMinor !== acquisitionSubtotalMinor + serviceMarginMinor
+    || firstPaymentTotalMinor !== sellingSubtotalMinor + logisticsDepositMinor
+  ) {
+    throw new Error("Verified payment amount does not match the authoritative pricing breakdown.");
   }
 
   const resolvedItems = await store.resolveItems(input.items);
@@ -128,8 +148,8 @@ export class DrizzleVerifiedPurchaseStore implements VerifiedPurchaseStore {
 
   async createAtomic(input: VerifiedPurchaseInput, resolvedItems: ResolvedItem[]): Promise<PersistedPurchase> {
     return this.database.transaction(async (transaction) => {
-      const subtotalMinor = toMinor(input.subtotalNaira);
-      const totalMinor = toMinor(input.totalNaira);
+      const subtotalMinor = assertMinor(input.acquisitionSubtotalMinor, "Acquisition subtotal");
+      const totalMinor = assertMinor(input.firstPaymentTotalMinor, "First payment total");
       const [order] = await transaction.insert(orders).values({
         reference: input.orderReference,
         customerName: input.customerName,
@@ -143,10 +163,15 @@ export class DrizzleVerifiedPurchaseStore implements VerifiedPurchaseStore {
         pricingCurrency: "NGN",
         displayCurrency: "NGN",
         productSubtotalMinor: subtotalMinor,
-        serviceFeeMinor: 0,
+        serviceFeeMinor: input.serviceMarginMinor,
         shippingTotalMinor: 0,
-        customsTotalMinor: 0,
+        customsTotalMinor: input.customsTotalMinor,
+        logisticsDepositMinor: input.logisticsDepositMinor,
+        actualLogisticsMinor: null,
+        logisticsAdjustmentMinor: null,
+        logisticsReconciliationStatus: "pending_measurement",
         totalMinor,
+        exchangeRateSnapshot: input.exchangeRateSnapshot,
         status: "paid",
       }).returning({ id: orders.id, reference: orders.reference });
       if (!order) throw new Error("Order insert returned no row.");
@@ -166,7 +191,13 @@ export class DrizzleVerifiedPurchaseStore implements VerifiedPurchaseStore {
         vendorUrl: item.vendorUrl,
         selectedOptions: item.selectedOptions,
         currency: "NGN",
-        unitPriceMinor: toMinor(item.priceNaira),
+        unitPriceMinor: item.sellingUnitMinor,
+        sourceCurrency: item.sourceCurrency,
+        sourceUnitPriceMinor: item.sourceUnitPriceMinor,
+        acquisitionUnitMinor: item.acquisitionUnitMinor,
+        serviceMarginUnitMinor: item.serviceMarginUnitMinor,
+        sellingUnitMinor: item.sellingUnitMinor,
+        exchangeRateSnapshot: item.exchangeRateSnapshot ?? {},
         quantity: item.qty,
       })));
 

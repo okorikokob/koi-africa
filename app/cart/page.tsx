@@ -5,9 +5,19 @@ import Image from "next/image";
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatNaira } from "@/lib/currency";
+import { useDisplayCurrency } from "@/components/currency/DisplayCurrencyProvider";
+import { KOI_NIKE_LOGISTICS_DEPOSIT_MINOR } from "@/lib/nike-pricing";
 
 export default function CartPage() {
   const { items, totalNaira, removeItem, setQty } = useCart();
+  const displayPricing = useDisplayCurrency();
+  const hasNike = items.some((item) => item.brandName.trim().toLowerCase() === "nike");
+  const logisticsDepositNaira = hasNike ? KOI_NIKE_LOGISTICS_DEPOSIT_MINOR / 100 : 0;
+  const firstPaymentNaira = totalNaira + logisticsDepositNaira;
+  const formatMoney = (amountNaira: number) => displayPricing.formatMinorPrice(
+    Math.round(amountNaira * 100),
+    "NGN",
+  ) ?? formatNaira(amountNaira);
 
   if (items.length === 0) {
     return (
@@ -58,7 +68,7 @@ export default function CartPage() {
                   </p>
                 ) : null}
                 <p className="mt-1 font-sans text-sm font-bold text-text-primary">
-                  {formatNaira(item.priceNaira)}
+                  {formatMoney(item.priceNaira)}
                 </p>
               </div>
 
@@ -85,7 +95,7 @@ export default function CartPage() {
               </div>
 
               <span className="shrink-0 font-display text-base font-black text-text-primary">
-                {formatNaira(item.priceNaira * item.qty)}
+                {formatMoney(item.priceNaira * item.qty)}
               </span>
 
               <button
@@ -104,17 +114,25 @@ export default function CartPage() {
         <div className="h-fit rounded-card border border-border bg-surface p-6">
           <h2 className="mb-4 font-display text-lg font-bold text-text-primary">Order Summary</h2>
           <div className="flex items-center justify-between py-2 font-sans text-sm text-text-secondary">
-            <span>Subtotal</span>
-            <span className="font-semibold text-text-primary">{formatNaira(totalNaira)}</span>
+            <span>Product price</span>
+            <span className="font-semibold text-text-primary">{formatMoney(totalNaira)}</span>
           </div>
+          {hasNike ? (
+            <div className="flex items-center justify-between py-2 font-sans text-sm text-text-secondary">
+              <span>Logistics deposit</span>
+              <span className="font-semibold text-text-primary">{formatMoney(logisticsDepositNaira)}</span>
+            </div>
+          ) : null}
           <div className="mt-2 flex items-center justify-between border-t border-border py-4">
             <span className="font-sans text-sm font-semibold text-text-primary">Total</span>
             <span className="font-display text-xl font-black text-text-primary">
-              {formatNaira(totalNaira)}
+              {formatMoney(firstPaymentNaira)}
             </span>
           </div>
           <p className="mb-4 font-sans text-xs leading-relaxed text-text-muted">
-            International delivery is quoted separately after KOI receives, packages, and measures your items.
+            {hasNike
+              ? "Product prices include KOI’s 10% service margin. The logistics deposit will be reconciled after your order is received, packaged and measured. If the final logistics cost is lower, the difference will be refunded. If it is higher, you will be asked to pay the balance before dispatch. Customs remains separate."
+              : "International delivery is quoted separately after KOI receives, packages, and measures your items."}
           </p>
           <Link
             href="/checkout"

@@ -185,21 +185,36 @@ export function ProductInfo({ product, onColorChange }: Props) {
 
   const displayPrice = selectedVariant?.price ?? selectedColourway?.priceAmount ?? product.priceAmount;
   const displayCurrency = selectedVariant?.currency ?? selectedColourway?.priceCurrency ?? product.priceCurrency;
+  const isNike = product.brandName.trim().toLowerCase() === "nike"
+    || product.vendorName.trim().toLowerCase() === "nike";
+  const nikePrice = isNike ? displayPricing.nikeSellingPrice(displayPrice, displayCurrency) : null;
   const compareAtPrice = selectedColourway?.compareAtPriceAmount ?? product.compareAtPriceAmount;
   const compareAtCurrency = selectedColourway?.priceCurrency ?? product.priceCurrency;
-  const formattedDisplayPrice = displayPricing.featureEnabled
+  const formattedDisplayPrice = nikePrice
+    ? nikePrice.formatted
+    : displayPricing.featureEnabled
     ? displayPricing.formatPrice(displayPrice, displayCurrency)
       ?? displayPricing.formatSourcePrice(displayPrice, displayCurrency)
       ?? `${displayPrice} ${displayCurrency}`
     : formatNaira(toNaira(displayPrice, displayCurrency));
-  const formattedCompareAtPrice = compareAtPrice
+  const nikeCompareAtPrice = isNike && compareAtPrice
+    ? displayPricing.nikeSellingPrice(compareAtPrice, compareAtCurrency)
+    : null;
+  const formattedCompareAtPrice = nikeCompareAtPrice?.formatted ?? (compareAtPrice
     ? displayPricing.featureEnabled
       ? displayPricing.formatPrice(compareAtPrice, compareAtCurrency)
         ?? displayPricing.formatSourcePrice(compareAtPrice, compareAtCurrency)
       : formatNaira(toNaira(compareAtPrice, compareAtCurrency))
-    : null;
+    : null);
   const formattedSourcePrice = displayPricing.formatSourcePrice(displayPrice, displayCurrency);
-  const trustFeatures = displayPricing.featureEnabled
+  const trustFeatures = isNike
+    ? [
+        "100% authentic — sourced from the official brand",
+        "Product price includes KOI's 10% service margin",
+        "Delivered to your door in 7–14 days",
+        "Logistics deposit is reconciled after packaging and measurement",
+      ]
+    : displayPricing.featureEnabled
     ? [
         "100% authentic — sourced from the official brand",
         "View the original store price in its source currency",
@@ -227,7 +242,9 @@ export function ProductInfo({ product, onColorChange }: Props) {
       : unavailable
         ? "Currently out of stock"
         : "Select all options to continue";
-  const priceNaira = toNaira(displayPrice, displayCurrency);
+  const priceNaira = nikePrice
+    ? nikePrice.sellingMinorNgn / 100
+    : toNaira(displayPrice, displayCurrency);
 
   function handleAddToCart() {
     addItem(
@@ -241,6 +258,7 @@ export function ProductInfo({ product, onColorChange }: Props) {
         brandName: product.brandName,
         image: selectedColourway?.primaryImage ?? product.imageUrl,
         priceNaira,
+        pricingModel: isNike ? "nike-margin-v1" : undefined,
       },
       qty,
     );
@@ -291,7 +309,12 @@ export function ProductInfo({ product, onColorChange }: Props) {
             </span>
           )}
         </div>
-        {displayPricing.featureEnabled ? (
+        {isNike ? (
+          <div className="mt-1.5 flex flex-col gap-0.5 font-sans text-xs text-text-muted md:text-sm">
+            <p>KOI product price includes the 10% KOI service margin.</p>
+            <p>A separate ₦30,000 logistics deposit is added once per order at checkout.</p>
+          </div>
+        ) : displayPricing.featureEnabled ? (
           <div className="mt-1.5 flex flex-col gap-0.5 font-sans text-xs text-text-muted md:text-sm">
             <p>
               Store price {formattedSourcePrice ?? displayPrice} {displayCurrency.toUpperCase()}

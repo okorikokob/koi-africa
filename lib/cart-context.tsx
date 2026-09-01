@@ -13,6 +13,7 @@ export type CartItem = {
   brandName: string;
   image: string;
   priceNaira: number;
+  pricingModel?: "nike-margin-v1";
   qty: number;
 };
 
@@ -48,7 +49,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           ...item,
           productId: item.productId ?? item.id ?? "",
           cartKey: item.cartKey ?? item.variantId ?? item.productId ?? item.id ?? "",
-        })).filter((item) => item.productId && item.cartKey));
+        })).filter((item) => item.productId
+          && item.cartKey
+          && (item.brandName.trim().toLowerCase() !== "nike" || item.pricingModel === "nike-margin-v1")));
       }
     } catch {
       // ignore malformed/unavailable storage

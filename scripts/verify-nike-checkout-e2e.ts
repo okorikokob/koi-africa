@@ -1,10 +1,7 @@
 import { loadEnvConfig } from "@next/env";
 import postgres from "postgres";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
 
 loadEnvConfig(process.cwd());
-const execFileAsync = promisify(execFile);
 
 type Candidate = {
   productId: string;
@@ -57,19 +54,48 @@ async function main() {
           items: [{ productId: candidate.productId, variantId: candidate.sourceVariantId, qty: 1 }],
         }),
       });
-      const payload = await payment.json() as { success?: boolean; data?: { authorizationUrl?: string; reference?: string }; error?: string };
+      const payload = await payment.json() as {
+        success?: boolean;
+        data?: {
+          authorizationUrl?: string;
+          reference?: string;
+          pricing?: {
+            acquisitionSubtotalMinor: number;
+            serviceMarginMinor: number;
+            sellingSubtotalMinor: number;
+            logisticsDepositMinor: number;
+            customsTotalMinor: number;
+            firstPaymentTotalMinor: number;
+          };
+        };
+        error?: string;
+      };
       if (!payment.ok || !payload.success || !payload.data?.authorizationUrl?.includes("paystack")) {
         throw new Error(`${candidate.title}: ${payload.error ?? `payment initialization returned ${payment.status}`}`);
       }
-      const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-      const { stdout: paystackHtml } = await execFileAsync(chromePath, [
-        "--headless=new",
-        "--disable-gpu",
-        "--no-first-run",
-        "--dump-dom",
-        payload.data.authorizationUrl,
-      ], { timeout: 30_000, maxBuffer: 5_000_000 });
-      if (!paystackHtml.toLowerCase().includes("paystack")) throw new Error("Paystack authorization page did not render in Chrome.");
+      if (!payload.data.reference || !payload.data.pricing) throw new Error("Pricing evidence is missing from initialization.");
+      const paystackVerification = await fetch(
+        `https://api.paystack.co/transaction/verify/${encodeURIComponent(payload.data.reference)}`,
+        { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY!}` } },
+      );
+      const paystackPayload = await paystackVerification.json() as { data?: { amount?: number; currency?: string; status?: string } };
+      if (
+        !paystackVerification.ok
+        || paystackPayload.data?.amount !== payload.data.pricing.firstPaymentTotalMinor
+        || paystackPayload.data?.currency !== "NGN"
+      ) {
+        throw new Error("Paystack did not retain the exact NGN first-payment amount.");
+      }
+      if (
+        payload.data.pricing.sellingSubtotalMinor
+          !== payload.data.pricing.acquisitionSubtotalMinor + payload.data.pricing.serviceMarginMinor
+        || payload.data.pricing.logisticsDepositMinor !== 3_000_000
+        || payload.data.pricing.customsTotalMinor !== 0
+        || payload.data.pricing.firstPaymentTotalMinor
+          !== payload.data.pricing.sellingSubtotalMinor + payload.data.pricing.logisticsDepositMinor
+      ) {
+        throw new Error("The initialized Nike pricing breakdown is inconsistent.");
+      }
       console.log(JSON.stringify({
         title: candidate.title,
         productId: candidate.productId,
@@ -79,6 +105,9 @@ async function main() {
         checkout: checkout.status,
         staleAgeMinutes: Math.floor((Date.now() - candidate.freshness.getTime()) / 60_000),
         paystackOpened: true,
+        paystackStatus: paystackPayload.data.status,
+        paystackAmountMinor: paystackPayload.data.amount,
+        pricing: payload.data.pricing,
         reference: payload.data.reference,
         elapsedMs: Date.now() - startedAt,
       }));

@@ -46,11 +46,20 @@ export function ProductCard({ product }: Props) {
   const displayPricing = useDisplayCurrency();
   const [wished, setWished] = useState(false);
 
-  const priceNaira = toNaira(product.priceAmount, product.priceCurrency);
+  const isNike = product.brandName.trim().toLowerCase() === "nike"
+    || product.vendorName.trim().toLowerCase() === "nike";
+  const nikePrice = isNike
+    ? displayPricing.nikeSellingPrice(product.priceAmount, product.priceCurrency)
+    : null;
+  const priceNaira = nikePrice
+    ? nikePrice.sellingMinorNgn / 100
+    : toNaira(product.priceAmount, product.priceCurrency);
   const sourceCurrency = product.priceCurrency.toUpperCase();
   const sourcePrice = displayPricing.formatSourcePrice(product.priceAmount, sourceCurrency);
   const multiCurrencyPrice = displayPricing.formatPrice(product.priceAmount, sourceCurrency);
-  const renderedPrice = displayPricing.featureEnabled
+  const renderedPrice = nikePrice
+    ? nikePrice.formatted
+    : displayPricing.featureEnabled
     ? multiCurrencyPrice ?? sourcePrice ?? `${product.priceAmount} ${sourceCurrency}`
     : formatPriceAsNaira(product.priceAmount, product.priceCurrency);
   const sourcePriceLabel = displayPricing.selectedCurrency === sourceCurrency
@@ -127,7 +136,11 @@ export function ProductCard({ product }: Props) {
             <div className="text-sm font-black text-text-primary md:text-[17px]">
               {renderedPrice}
             </div>
-            {displayPricing.featureEnabled ? (
+            {isNike ? (
+              <div className="mt-px text-[10px] text-text-muted md:text-[11px]">
+                KOI product price · logistics deposit at checkout
+              </div>
+            ) : displayPricing.featureEnabled ? (
               <>
                 <div className="mt-px text-[10px] text-text-muted md:text-[11px]">{sourcePriceLabel}</div>
                 <div className="text-[10px] text-text-muted md:text-[11px]">Delivery calculated separately</div>
@@ -148,6 +161,7 @@ export function ProductCard({ product }: Props) {
                 brandName: product.brandName,
                 image: product.imageUrl,
                 priceNaira,
+                pricingModel: isNike ? "nike-margin-v1" : undefined,
               });
             }}
             className="flex-shrink-0 whitespace-nowrap rounded-lg bg-primary-soft px-2.5 py-1.5 text-[11px] font-extrabold text-primary transition-colors duration-150 hover:bg-primary hover:text-white active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 md:rounded-[10px] md:px-4 md:py-[9px] md:text-xs"

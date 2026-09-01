@@ -14,11 +14,14 @@ export function generatePaymentReference(): string {
 
 export async function initializePayment(params: {
   email: string;
-  amountNaira: number;
+  amountMinor: number;
   reference: string;
   callbackUrl: string;
   metadata?: Record<string, unknown>;
 }): Promise<{ authorizationUrl: string; reference: string }> {
+  if (!Number.isSafeInteger(params.amountMinor) || params.amountMinor <= 0) {
+    throw new Error("Paystack amount must be a positive integer in minor units.");
+  }
   const res = await fetch(`${PAYSTACK_BASE_URL}/transaction/initialize`, {
     method: "POST",
     headers: {
@@ -27,7 +30,7 @@ export async function initializePayment(params: {
     },
     body: JSON.stringify({
       email: params.email,
-      amount: Math.round(params.amountNaira * 100), // kobo
+      amount: params.amountMinor,
       reference: params.reference,
       callback_url: params.callbackUrl,
       metadata: params.metadata ?? {},
@@ -44,7 +47,7 @@ export async function initializePayment(params: {
 
 export type VerifyPaymentResult = {
   success: boolean;
-  amountNaira: number;
+  amountMinor: number;
   channel: string;
   email: string;
   metadata: Record<string, unknown>;
@@ -61,7 +64,7 @@ export async function verifyPayment(reference: string): Promise<VerifyPaymentRes
   const json = await res.json();
   return {
     success: json.data.status === "success",
-    amountNaira: json.data.amount / 100,
+    amountMinor: json.data.amount as number,
     channel: json.data.channel as string,
     email: json.data.customer?.email as string,
     metadata: (json.data.metadata as Record<string, unknown>) ?? {},

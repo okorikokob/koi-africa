@@ -47,6 +47,15 @@ export const paymentRequestStatus = pgEnum("payment_request_status", [
   "cancelled",
 ]);
 
+export const logisticsReconciliationStatus = pgEnum("logistics_reconciliation_status", [
+  "pending_measurement",
+  "no_adjustment",
+  "refund_due",
+  "refunded",
+  "top_up_due",
+  "top_up_paid",
+]);
+
 export const serviceFeePolicies = pgTable("service_fee_policies", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),
@@ -86,14 +95,14 @@ export const orders = pgTable("orders", {
   serviceFeeMinor: bigint("service_fee_minor", { mode: "number" }).notNull().default(0),
   shippingTotalMinor: bigint("shipping_total_minor", { mode: "number" }).notNull(),
   customsTotalMinor: bigint("customs_total_minor", { mode: "number" }).notNull().default(0),
+  logisticsDepositMinor: bigint("logistics_deposit_minor", { mode: "number" }).notNull().default(0),
+  actualLogisticsMinor: bigint("actual_logistics_minor", { mode: "number" }),
+  logisticsAdjustmentMinor: bigint("logistics_adjustment_minor", { mode: "number" }),
+  logisticsReconciliationStatus: logisticsReconciliationStatus("logistics_reconciliation_status")
+    .notNull()
+    .default("pending_measurement"),
   totalMinor: bigint("total_minor", { mode: "number" }).notNull(),
-  exchangeRateSnapshot: jsonb("exchange_rate_snapshot").$type<{
-    baseCurrency: string;
-    quoteCurrency: string;
-    rate: string;
-    source: string;
-    effectiveAt: string;
-  }>(),
+  exchangeRateSnapshot: jsonb("exchange_rate_snapshot").$type<Record<string, unknown>>(),
   shippingQuoteId: uuid("shipping_quote_id").references(() => shippingQuotes.id, { onDelete: "set null" }),
   status: orderStatus("status").notNull().default("pending_quote"),
   internalNotes: text("internal_notes"),
@@ -105,8 +114,14 @@ export const orders = pgTable("orders", {
     and ${table.serviceFeeMinor} >= 0
     and ${table.shippingTotalMinor} >= 0
     and ${table.customsTotalMinor} >= 0
+    and ${table.logisticsDepositMinor} >= 0
+    and (${table.actualLogisticsMinor} is null or ${table.actualLogisticsMinor} >= 0)
     and ${table.totalMinor} >= 0`),
-  check("orders_total_matches_parts", sql`${table.totalMinor} = ${table.productSubtotalMinor} + ${table.serviceFeeMinor} + ${table.shippingTotalMinor} + ${table.customsTotalMinor}`),
+  check("orders_first_payment_total_matches_parts", sql`${table.totalMinor} = ${table.productSubtotalMinor} + ${table.serviceFeeMinor} + ${table.logisticsDepositMinor}`),
+  check("orders_logistics_adjustment_consistent", sql`
+    (${table.actualLogisticsMinor} is null and ${table.logisticsAdjustmentMinor} is null)
+    or (${table.actualLogisticsMinor} is not null
+      and ${table.logisticsAdjustmentMinor} = ${table.actualLogisticsMinor} - ${table.logisticsDepositMinor})`),
 ]);
 
 export const orderItems = pgTable("order_items", {
@@ -126,6 +141,12 @@ export const orderItems = pgTable("order_items", {
   selectedOptions: jsonb("selected_options").$type<Array<{ name: string; value: string }>>().notNull().default([]),
   currency: currencyCode("currency").notNull(),
   unitPriceMinor: bigint("unit_price_minor", { mode: "number" }).notNull(),
+  sourceCurrency: currencyCode("source_currency").notNull(),
+  sourceUnitPriceMinor: bigint("source_unit_price_minor", { mode: "number" }).notNull(),
+  acquisitionUnitMinor: bigint("acquisition_unit_minor", { mode: "number" }).notNull(),
+  serviceMarginUnitMinor: bigint("service_margin_unit_minor", { mode: "number" }).notNull(),
+  sellingUnitMinor: bigint("selling_unit_minor", { mode: "number" }).notNull(),
+  exchangeRateSnapshot: jsonb("exchange_rate_snapshot").$type<Record<string, unknown>>().notNull(),
   quantity: integer("quantity").notNull(),
   weightGramsSnapshot: integer("weight_grams_snapshot"),
   dimensionsMmSnapshot: jsonb("dimensions_mm_snapshot").$type<{ length: number; width: number; height: number }>(),
@@ -133,6 +154,12 @@ export const orderItems = pgTable("order_items", {
 }, (table) => [
   index("order_items_order_idx").on(table.orderId),
   check("order_items_unit_price_nonnegative", sql`${table.unitPriceMinor} >= 0`),
+  check("order_items_pricing_nonnegative", sql`${table.sourceUnitPriceMinor} >= 0
+    and ${table.acquisitionUnitMinor} >= 0
+    and ${table.serviceMarginUnitMinor} >= 0
+    and ${table.sellingUnitMinor} >= 0`),
+  check("order_items_selling_price_matches_parts", sql`${table.sellingUnitMinor} = ${table.acquisitionUnitMinor} + ${table.serviceMarginUnitMinor}`),
+  check("order_items_compatibility_price_matches_selling", sql`${table.unitPriceMinor} = ${table.sellingUnitMinor}`),
   check("order_items_quantity_positive", sql`${table.quantity} > 0`),
 ]);
 

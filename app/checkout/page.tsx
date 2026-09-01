@@ -8,6 +8,8 @@ import { useCart } from "@/lib/cart-context";
 import { formatNaira } from "@/lib/currency";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import type { CheckoutFormInput } from "@/lib/schemas";
+import { useDisplayCurrency } from "@/components/currency/DisplayCurrencyProvider";
+import { KOI_NIKE_LOGISTICS_DEPOSIT_MINOR } from "@/lib/nike-pricing";
 
 export default function CheckoutPage() {
   const { items } = useCart();
@@ -16,10 +18,18 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const paymentInFlight = useRef(false);
+  const displayPricing = useDisplayCurrency();
   const subtotalNaira = useMemo(
     () => items.reduce((sum, item) => sum + item.priceNaira * item.qty, 0),
     [items],
   );
+  const hasNike = items.some((item) => item.brandName.trim().toLowerCase() === "nike");
+  const logisticsDepositNaira = hasNike ? KOI_NIKE_LOGISTICS_DEPOSIT_MINOR / 100 : 0;
+  const firstPaymentNaira = subtotalNaira + logisticsDepositNaira;
+  const formatMoney = (amountNaira: number) => displayPricing.formatMinorPrice(
+    Math.round(amountNaira * 100),
+    "NGN",
+  ) ?? formatNaira(amountNaira);
 
   const initializeCheckout = useCallback(async () => {
     if (!formData || paymentInFlight.current) return;
@@ -89,18 +99,19 @@ export default function CheckoutPage() {
                   <p className="truncate font-sans text-xs font-semibold text-text-primary">{item.title}{item.qty > 1 ? ` x ${item.qty}` : ""}</p>
                   {item.selectedOptions?.length ? <p className="truncate font-sans text-[11px] text-text-secondary">{item.selectedOptions.map((option) => option.value).join(" · ")}</p> : null}
                 </div>
-                <span className="shrink-0 font-sans text-xs font-bold text-text-primary">{formatNaira(item.priceNaira * item.qty)}</span>
+                <span className="shrink-0 font-sans text-xs font-bold text-text-primary">{formatMoney(item.priceNaira * item.qty)}</span>
               </div>
             ))}
           </div>
           <div className="border-t border-border pt-4">
-            <div className="flex items-center justify-between py-2 font-sans text-sm text-text-secondary"><span>Subtotal</span><span className="font-semibold text-text-primary">{formatNaira(subtotalNaira)}</span></div>
-            <div className="mt-2 flex items-center justify-between border-t border-border py-4"><span className="font-sans text-sm font-semibold text-text-primary">Product total</span><span className="font-display text-xl font-black text-text-primary">{formatNaira(subtotalNaira)}</span></div>
+            <div className="flex items-center justify-between py-2 font-sans text-sm text-text-secondary"><span>Product price <span className="text-[11px]">(includes KOI margin)</span></span><span className="font-semibold text-text-primary">{formatMoney(subtotalNaira)}</span></div>
+            {hasNike ? <div className="flex items-center justify-between py-2 font-sans text-sm text-text-secondary"><span>Logistics deposit</span><span className="font-semibold text-text-primary">{formatMoney(logisticsDepositNaira)}</span></div> : null}
+            <div className="mt-2 flex items-center justify-between border-t border-border py-4"><span className="font-sans text-sm font-semibold text-text-primary">First payment total</span><span className="font-display text-xl font-black text-text-primary">{formatMoney(firstPaymentNaira)}</span></div>
           </div>
-          <p className="mb-4 font-sans text-xs leading-relaxed text-text-muted">International delivery is quoted separately after KOI receives, packages, and measures your items.</p>
+          <p className="mb-4 font-sans text-xs leading-relaxed text-text-muted">{hasNike ? "The logistics deposit will be reconciled after your order is received, packaged and measured. If the final logistics cost is lower, the difference will be refunded. If it is higher, you will be asked to pay the balance before dispatch. Customs remains separate." : "International delivery is quoted separately after KOI receives, packages, and measures your items."}</p>
           <button type="button" disabled={!isFormValid || isSubmitting} onClick={handlePay} className="flex w-full items-center justify-center gap-2 rounded-button bg-primary py-4 font-sans text-base font-extrabold text-primary-foreground transition-all hover:-translate-y-px hover:bg-primary-hover hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none">
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-            {isSubmitting ? "Redirecting to Paystack..." : `Pay ${formatNaira(subtotalNaira)}`}
+            {isSubmitting ? "Redirecting to Paystack..." : `Pay ${formatMoney(firstPaymentNaira)}`}
           </button>
           <p aria-live="polite" className={`mt-3 text-center font-sans text-xs ${payError ? "text-error" : "text-text-muted"}`}>{helperMessage}</p>
         </div>

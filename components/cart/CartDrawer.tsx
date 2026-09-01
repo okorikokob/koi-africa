@@ -6,9 +6,18 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { formatNaira } from "@/lib/currency";
+import { useDisplayCurrency } from "@/components/currency/DisplayCurrencyProvider";
+import { KOI_NIKE_LOGISTICS_DEPOSIT_MINOR } from "@/lib/nike-pricing";
 
 export function CartDrawer() {
   const { items, isOpen, totalNaira, removeItem, closeCart } = useCart();
+  const displayPricing = useDisplayCurrency();
+  const hasNike = items.some((item) => item.brandName.trim().toLowerCase() === "nike");
+  const firstPaymentNaira = totalNaira + (hasNike ? KOI_NIKE_LOGISTICS_DEPOSIT_MINOR / 100 : 0);
+  const formatMoney = (amountNaira: number) => displayPricing.formatMinorPrice(
+    Math.round(amountNaira * 100),
+    "NGN",
+  ) ?? formatNaira(amountNaira);
 
   return (
     <AnimatePresence>
@@ -81,7 +90,7 @@ export function CartDrawer() {
                       ) : null}
                     </div>
                     <span className="flex-shrink-0 font-sans text-sm font-black text-text-primary">
-                      {formatNaira(item.priceNaira * item.qty)}
+                      {formatMoney(item.priceNaira * item.qty)}
                     </span>
                     <button
                       type="button"
@@ -100,10 +109,10 @@ export function CartDrawer() {
               <div>
                 <div className="flex items-center justify-between py-4 pt-[18px]">
                   <span className="font-sans text-[13px] font-semibold text-text-secondary">
-                    Total (incl. delivery est.)
+                    First payment total
                   </span>
                   <span className="font-display text-[22px] font-black text-text-primary">
-                    {formatNaira(totalNaira)}
+                    {formatMoney(firstPaymentNaira)}
                   </span>
                 </div>
                 <Link

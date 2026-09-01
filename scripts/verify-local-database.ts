@@ -26,11 +26,28 @@ async function main(): Promise<void> {
       select count(*)::integer as count from public.__koi_migrations
     `;
 
-    if (tables.length !== 20) throw new Error(`Expected 20 domain tables, found ${tables.length}.`);
-    if (enums.length !== 7) throw new Error(`Expected 7 enums, found ${enums.length}.`);
-    if (migrations[0]?.count !== 3) throw new Error("Expected exactly three applied migrations.");
+    const tableNames = new Set(tables.map((table) => table.tablename));
+    const requiredTables = ["products", "product_variants", "orders", "order_items", "payments", "exchange_rates"];
+    const missingTables = requiredTables.filter((table) => !tableNames.has(table));
+    if (missingTables.length) throw new Error(`Missing required tables: ${missingTables.join(", ")}.`);
+    const enumNames = new Set(enums.map((entry) => entry.typname));
+    if (!enumNames.has("logistics_reconciliation_status")) {
+      throw new Error("Missing logistics_reconciliation_status enum.");
+    }
+    if ((migrations[0]?.count ?? 0) < 10) throw new Error("Expected at least ten applied Drizzle migrations.");
 
-    console.log(`Verified ${tables.length} domain tables, ${enums.length} enums, and ${migrations[0].count} migrations.`);
+    const pricingColumns = await sql<{ column_name: string }[]>`
+      select column_name from information_schema.columns
+      where table_schema = 'public'
+        and table_name = 'order_items'
+        and column_name in (
+          'source_currency', 'source_unit_price_minor', 'acquisition_unit_minor',
+          'service_margin_unit_minor', 'selling_unit_minor', 'exchange_rate_snapshot'
+        )
+    `;
+    if (pricingColumns.length !== 6) throw new Error("Order item pricing snapshots are incomplete.");
+
+    console.log(`Verified ${tables.length} domain tables, ${enums.length} enums, ${migrations[0].count} migrations, and Nike pricing snapshots.`);
   } finally {
     await sql.end();
   }
