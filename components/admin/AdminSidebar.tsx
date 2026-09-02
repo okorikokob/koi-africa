@@ -19,6 +19,7 @@ import { useAdminMobileNav } from "@/components/admin/AdminMobileNavProvider";
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/orders", label: "Orders", icon: Package },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 const SOON = [
@@ -105,13 +106,6 @@ export function AdminSidebar({ name, email }: Props) {
             {label}
           </span>
         ))}
-        <span
-          title="Not built yet"
-          className="flex cursor-not-allowed items-center gap-3 rounded-[11px] px-3 py-2.5 font-sans text-sm font-semibold text-white/25"
-        >
-          <Settings className="h-4 w-4 shrink-0" strokeWidth={1.75} />
-          Settings
-        </span>
       </nav>
 
       <div className="mt-auto flex items-center gap-2.5 rounded-xl bg-white/5 px-3 py-3.5">

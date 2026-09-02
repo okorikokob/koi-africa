@@ -18,6 +18,26 @@ After building any component, add an entry below with: component name, file path
 
 ## Components
 
+### Admin security form
+
+File: components/admin/ChangePasswordForm.tsx
+Last updated: 2026-09-01
+
+| Property | Class |
+| --- | --- |
+| Background | page card `bg-surface`; inputs `bg-background` |
+| Border | card `border border-border`; inputs `border-[1.5px] border-border` |
+| Border radius | card `rounded-card`; inputs `rounded-[12px]`; alerts `rounded-[10px]` |
+| Text — primary | labels `font-sans text-xs font-bold text-text-primary` |
+| Text — secondary | guidance `font-sans text-xs text-text-muted` |
+| Spacing | form `gap-5`; inputs `px-4 py-3.5`; card `p-4.5 sm:p-6.5` |
+| Hover state | button `hover:-translate-y-px hover:bg-primary-hover` |
+| Focus state | inputs `focus:border-primary focus:ring-4 focus:ring-primary-soft` |
+| Shadow | card `shadow-sm`; button branded hover shadow |
+| Accent usage | primary security icon and submit action; semantic error/success alerts |
+
+**Pattern notes:** Sensitive admin forms use the established login-input treatment inside an admin surface card. Password values remain browser-only form inputs; status messages are semantic and never echo submitted values.
+
 ### Product option selectors
 
 File: components/product/ProductInfo.tsx

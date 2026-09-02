@@ -9,7 +9,9 @@ Update this file after every completed feature.
 **Phase:** Phase 4 — Admin
 **Business Model:** Chowdeck — customer pays FULL price in naira on KOI
 **Last completed:** 15 Company pages — /about, /faq (accordion), /contact (working form via actions/contact.ts + InsForge emails.send — currently blocked, see Open Decisions), /returns (marked pending on logistics partner decision), /privacy + /terms (draft copy, flagged "pending legal review", not lawyer-reviewed)
-**Next:** 16 Polish pass (Phase 5, final item)
+**Next:** PostgreSQL customer order tracking, then logistics reconciliation workflow.
+
+**Admin security update (2026-09-01):** PostgreSQL password rotation now requires the current password, enforces a 10-character minimum, revokes prior sessions atomically, creates one replacement session, and writes a password-change audit event without sensitive values.
 
 ---
 
