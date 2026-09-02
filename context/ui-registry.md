@@ -153,6 +153,26 @@ Last updated: 2026-08-24
 
 **Pattern notes:** Use a native select for compact global preferences. Keep the mobile control at least 44px high with 16px text to provide a proper touch target and avoid browser input zoom. The desktop navbar uses the unlabelled form; the mobile drawer uses the visible label. Hide the control unless the feature is enabled and a complete stored exchange-rate snapshot is available.
 
+### Customer order tracking cards
+
+File: app/track/page.tsx
+Last updated: 2026-09-02
+
+| Property | Class |
+| --- | --- |
+| Background | cards `bg-surface`; empty-state timeline steps `bg-primary-soft` |
+| Border | cards and internal dividers `border border-border` |
+| Border radius | cards `rounded-[20px]`; item images `rounded-lg`; status badges `rounded-full` |
+| Text — primary | headings and totals `font-display font-semibold text-text-primary`; item names `font-sans font-semibold` |
+| Text — secondary | variant, provider, address, and money-detail text `font-sans text-text-secondary` |
+| Spacing | cards `p-5` or `p-6`; card stack `gap-6`; compact rows `gap-3` |
+| Hover state | lookup action `hover:bg-primary-hover` |
+| Focus state | lookup inputs `focus:border-primary focus:ring-2 focus:ring-primary/20` |
+| Shadow | cards `shadow-sm` |
+| Accent usage | primary for active progress; semantic success, warning, and error status badges |
+
+**Pattern notes:** Customer tracking uses persisted order-item snapshots rather than live catalogue reconstruction. Product price and the separate logistics deposit are shown as customer-safe first-payment components; acquisition cost, embedded margin, internal notes, provider payloads, and reconciliation references must never appear. Shipment cards may show provider, tracking number, status, location, and event date only.
+
 <!--
 Entry template:
 

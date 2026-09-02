@@ -44,6 +44,16 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   cancelled: "Cancelled",
 };
 
+export const CUSTOMER_ORDER_TIMELINE: ReadonlyArray<{
+  key: OrderStatus;
+  label: string;
+}> = [
+  { key: "paid", label: "Order paid" },
+  { key: "sourcing", label: "Sourcing from vendor" },
+  { key: "shipped", label: "Shipped to Nigeria" },
+  { key: "delivered", label: "Delivered" },
+];
+
 // Each status gets its own color from the KOI token set so the orders table
 // reads at a glance. The in-flight stages (paid → sourcing → shipped) use a
 // deliberate light-to-dark blue progression — the deeper the blue, the closer

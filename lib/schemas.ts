@@ -32,8 +32,8 @@ export type InitializePaymentInput = z.infer<typeof initializePaymentSchema>;
 // Order tracking lookup — reference + email pair so a guessed reference alone
 // can't pull up someone else's order.
 export const trackOrderSchema = z.object({
-  reference: z.string().min(1, "Enter your order reference"),
-  email: z.string().email("Enter the email you checked out with"),
+  reference: z.string().trim().min(1, "Enter your order reference"),
+  email: z.string().trim().email("Enter the email you checked out with"),
 });
 
 export type TrackOrderInput = z.infer<typeof trackOrderSchema>;

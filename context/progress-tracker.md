@@ -9,11 +9,13 @@ Update this file after every completed feature.
 **Phase:** Phase 4 — Admin
 **Business Model:** Chowdeck — customer pays FULL price in naira on KOI
 **Last completed:** 15 Company pages — /about, /faq (accordion), /contact (working form via actions/contact.ts + InsForge emails.send — currently blocked, see Open Decisions), /returns (marked pending on logistics partner decision), /privacy + /terms (draft copy, flagged "pending legal review", not lawyer-reviewed)
-**Next:** PostgreSQL customer order tracking, then logistics reconciliation workflow.
+**Next:** Customer notifications and a full payment → admin → tracking → delivery operational test.
 
 **Admin security update (2026-09-01):** PostgreSQL password rotation now requires the current password, enforces a 10-character minimum, revokes prior sessions atomically, creates one replacement session, and writes a password-change audit event without sensitive values.
 
 **Admin logistics update (2026-09-02):** Order operations now enforce forward-only status transitions, capture one or more physical package measurements, reconcile the logistics deposit against a confirmed amount excluding Customs, and manually record refund/top-up settlement references with PostgreSQL audit history.
+
+**Customer tracking recovery (2026-09-02):** `/track` and `POST /api/orders/track` now read the authoritative PostgreSQL commerce snapshots using normalized order reference + checkout email. The customer response includes exact selected variants, first-payment components, and customer-safe shipment milestones while excluding internal pricing, staff notes, provider payloads, and reconciliation references.
 
 ---
 
@@ -36,7 +38,7 @@ Update this file after every completed feature.
 - [x] 10 Checkout — delivery details form + order summary
 - [x] 11 Paystack — full naira payment, server-side verify, create order in InsForge (confirmed working in production)
 - [x] 12a Order confirmation — /checkout/success verifies payment and shows order summary
-- [x] 12b Order tracking page — /track + POST /api/orders/track, looks up order by reference + email
+- [x] 12b Order tracking page — /track + POST /api/orders/track, PostgreSQL lookup by normalized reference + email with exact item/variant snapshots
 - [x] 12c Cleanup — removed dead code from the old self-report/pay-later-delivery-fee model (app/order/new, app/api/orders/route.ts, components/order/OrderForm.tsx)
 
 ### Phase 4 — Admin

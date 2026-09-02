@@ -5,65 +5,57 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Search, Loader2, MapPin } from "lucide-react";
-import { formatNaira } from "@/lib/currency";
+import {
+  formatCurrencyMinor,
+  type SupportedDisplayCurrency,
+} from "@/lib/display-currency";
+import {
+  CUSTOMER_ORDER_TIMELINE,
+  ORDER_STATUS_BADGE_CLASS,
+  ORDER_STATUS_LABELS,
+  type OrderStatus,
+} from "@/lib/shipping";
 import { Reveal } from "@/components/motion/Reveal";
 import { CompanyBand } from "@/components/company/CompanyBand";
 import { CtaBanner } from "@/components/company/CtaBanner";
 
-type OrderItem = { title: string; qty: number; image: string | null };
-
-type OrderStatus =
-  | "submitted"
-  | "awaiting_payment"
-  | "paid"
-  | "sourcing"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+type OrderItem = {
+  title: string;
+  brandName: string;
+  qty: number;
+  image: string | null;
+  selectedOptions: Array<{ name: string; value: string }>;
+  sellingUnitMinor: number;
+};
 
 type OrderResult = {
   reference: string;
   status: OrderStatus;
   deliveryAddress: string;
   deliveryCity: string;
-  deliveryState: string;
-  subtotalNaira: number;
-  deliveryFeeNaira: number;
-  totalNaira: number;
+  deliveryRegion: string;
+  deliveryLandmark: string | null;
+  currency: SupportedDisplayCurrency;
+  sellingSubtotalMinor: number;
+  logisticsDepositMinor: number;
+  totalMinor: number;
   createdAt: string;
   items: OrderItem[];
+  shipment: {
+    provider: string;
+    trackingNumber: string | null;
+    status: string;
+    events: Array<{ status: string; location: string | null; occurredAt: string }>;
+  } | null;
 };
-
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  submitted: "Submitted",
-  awaiting_payment: "Awaiting payment",
-  paid: "Paid",
-  sourcing: "Sourcing",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
-
-const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
-  submitted: "bg-surface-secondary text-text-secondary",
-  awaiting_payment: "bg-warning/10 text-warning",
-  paid: "bg-success/10 text-success",
-  sourcing: "bg-primary-soft text-primary",
-  shipped: "bg-primary-soft text-primary",
-  delivered: "bg-success/10 text-success",
-  cancelled: "bg-error/10 text-error",
-};
-
-const TIMELINE_STEPS: { key: OrderStatus; label: string }[] = [
-  { key: "paid", label: "Order paid" },
-  { key: "sourcing", label: "Sourcing from vendor" },
-  { key: "shipped", label: "Shipped to Nigeria" },
-  { key: "delivered", label: "Delivered" },
-];
 
 function timelineIndex(status: OrderStatus): number {
-  const idx = TIMELINE_STEPS.findIndex((s) => s.key === status);
+  const idx = CUSTOMER_ORDER_TIMELINE.findIndex((step) => step.key === status);
   return idx === -1 ? 0 : idx;
+}
+
+function formatShipmentStatus(status: string): string {
+  return status.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 const WHAT_TO_EXPECT = [
@@ -194,9 +186,9 @@ function TrackContent() {
                     </p>
                   </div>
                   <span
-                    className={`rounded-full px-3 py-1.5 font-sans text-xs font-semibold ${STATUS_BADGE_CLASS[order.status]}`}
+                    className={`rounded-full px-3 py-1.5 font-sans text-xs font-semibold ${ORDER_STATUS_BADGE_CLASS[order.status]}`}
                   >
-                    {STATUS_LABEL[order.status]}
+                    {ORDER_STATUS_LABELS[order.status]}
                   </span>
                 </div>
 
@@ -206,7 +198,7 @@ function TrackContent() {
                       Order progress
                     </h2>
                     <ol className="flex flex-col gap-4">
-                      {TIMELINE_STEPS.map((step, i) => {
+                      {CUSTOMER_ORDER_TIMELINE.map((step, i) => {
                         const currentIdx = timelineIndex(order.status);
                         const done = i < currentIdx;
                         const active = i === currentIdx;
@@ -250,19 +242,81 @@ function TrackContent() {
                           )}
                         </div>
                         <p className="min-w-0 flex-1 truncate font-sans text-sm font-semibold text-text-primary">
-                          {item.title}
-                          {item.qty > 1 ? ` × ${item.qty}` : ""}
+                          {item.title}{item.qty > 1 ? ` × ${item.qty}` : ""}
+                          <span className="mt-0.5 block truncate text-xs font-normal text-text-secondary">
+                            {[item.brandName, ...item.selectedOptions.map((option) => `${option.name}: ${option.value}`)]
+                              .filter(Boolean)
+                              .join(" · ")}
+                          </span>
                         </p>
+                        <span className="shrink-0 font-sans text-sm font-semibold text-text-primary">
+                          {formatCurrencyMinor(item.sellingUnitMinor * item.qty, order.currency)}
+                        </span>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-                    <span className="font-sans text-sm font-semibold text-text-primary">Total paid</span>
-                    <span className="font-display text-lg font-black text-text-primary">
-                      {formatNaira(order.totalNaira)}
-                    </span>
+                  <div className="mt-4 space-y-2 border-t border-border pt-4 font-sans text-sm">
+                    <div className="flex items-center justify-between text-text-secondary">
+                      <span>Products</span>
+                      <span>{formatCurrencyMinor(order.sellingSubtotalMinor, order.currency)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-text-secondary">
+                      <span>Logistics deposit</span>
+                      <span>{formatCurrencyMinor(order.logisticsDepositMinor, order.currency)}</span>
+                    </div>
+                    <div className="flex items-center justify-between pt-1 font-semibold text-text-primary">
+                      <span>Total paid</span>
+                      <span className="font-display text-lg font-black">
+                        {formatCurrencyMinor(order.totalMinor, order.currency)}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {order.shipment && (
+                  <div className="rounded-[20px] border border-border bg-surface p-6 shadow-sm">
+                    <h2 className="mb-3 font-display text-sm font-semibold uppercase tracking-[0.08em] text-text-muted">
+                      Shipment
+                    </h2>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="font-sans text-sm font-semibold text-text-primary">
+                          {formatShipmentStatus(order.shipment.status)}
+                        </p>
+                        <p className="mt-1 font-sans text-xs text-text-secondary">
+                          Provider: {order.shipment.provider.toUpperCase()}
+                        </p>
+                      </div>
+                      {order.shipment.trackingNumber && (
+                        <div className="text-right">
+                          <p className="font-sans text-xs text-text-muted">Tracking number</p>
+                          <p className="font-sans text-sm font-semibold text-text-primary">
+                            {order.shipment.trackingNumber}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {order.shipment.events.length > 0 && (
+                      <ol className="mt-4 space-y-3 border-t border-border pt-4">
+                        {order.shipment.events.map((event, index) => (
+                          <li key={`${event.status}-${event.occurredAt}-${index}`} className="flex justify-between gap-4">
+                            <div>
+                              <p className="font-sans text-sm font-medium text-text-primary">
+                                {formatShipmentStatus(event.status)}
+                              </p>
+                              {event.location && (
+                                <p className="font-sans text-xs text-text-secondary">{event.location}</p>
+                              )}
+                            </div>
+                            <time className="shrink-0 font-sans text-xs text-text-muted">
+                              {new Date(event.occurredAt).toLocaleDateString("en-NG")}
+                            </time>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </div>
+                )}
 
                 <div className="rounded-[20px] border border-border bg-surface p-6 shadow-sm">
                   <h2 className="mb-3 flex items-center gap-2 font-display text-sm font-semibold uppercase tracking-[0.08em] text-text-muted">
@@ -270,7 +324,8 @@ function TrackContent() {
                     Delivery address
                   </h2>
                   <p className="font-sans text-sm text-text-secondary">
-                    {order.deliveryAddress}, {order.deliveryCity}, {order.deliveryState}
+                    {order.deliveryAddress}, {order.deliveryCity}, {order.deliveryRegion}
+                    {order.deliveryLandmark ? ` · ${order.deliveryLandmark}` : ""}
                   </p>
                 </div>
               </div>
