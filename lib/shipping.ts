@@ -10,6 +10,30 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+const ORDER_TRANSITIONS: Record<OrderStatus, readonly OrderStatus[]> = {
+  pending_quote: ["awaiting_payment", "cancelled"],
+  awaiting_payment: ["paid", "cancelled"],
+  paid: ["sourcing", "cancelled"],
+  sourcing: ["shipped", "cancelled"],
+  shipped: ["delivered"],
+  delivered: [],
+  cancelled: [],
+};
+
+export function canTransitionOrderStatus(
+  from: OrderStatus,
+  to: OrderStatus,
+  logisticsSettled: boolean,
+): boolean {
+  if (from === to) return true;
+  if (to === "shipped" && !logisticsSettled) return false;
+  return ORDER_TRANSITIONS[from].includes(to);
+}
+
+export function availableOrderStatuses(from: OrderStatus, logisticsSettled: boolean): OrderStatus[] {
+  return ORDER_STATUSES.filter((status) => canTransitionOrderStatus(from, status, logisticsSettled));
+}
+
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   pending_quote: "Pending logistics",
   awaiting_payment: "Awaiting payment",

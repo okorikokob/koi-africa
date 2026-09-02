@@ -8,6 +8,9 @@ import { AdminTopbar } from "@/components/admin/AdminTopbar";
 import { OrderStatusBadge } from "@/components/admin/OrderStatusBadge";
 import { OrderStatusUpdater } from "@/components/admin/OrderStatusUpdater";
 import { OrderNotesEditor } from "@/components/admin/OrderNotesEditor";
+import { OrderLogisticsManager } from "@/components/admin/OrderLogisticsManager";
+import { availableOrderStatuses } from "@/lib/shipping";
+import { isLogisticsReconciliationSettled, type LogisticsReconciliationStatus } from "@/lib/admin-logistics";
 
 type Props = { params: Promise<{ id: string }> };
 const naira = (minor: number) => formatNaira(minor / 100);
@@ -17,6 +20,8 @@ export default async function AdminOrderDetailPage({ params }: Props) {
   const order = await adminOrderRepository.getById(id);
   if (!order) notFound();
   const sellingSubtotalMinor = order.acquisitionSubtotalMinor + order.marginMinor;
+  const reconciliationStatus = order.reconciliationStatus as LogisticsReconciliationStatus;
+  const logisticsSettled = isLogisticsReconciliationSettled(reconciliationStatus);
 
   return (
     <>
@@ -74,6 +79,15 @@ export default async function AdminOrderDetailPage({ params }: Props) {
               <p className="mt-1 font-sans text-xs text-text-muted">Staff only — never shown to the customer.</p>
               <div className="mt-3"><OrderNotesEditor orderId={order.id} initialNotes={order.internalNotes ?? ""} /></div>
             </section>
+            <OrderLogisticsManager
+              orderId={order.id}
+              orderStatus={order.status}
+              depositMinor={order.logisticsDepositMinor}
+              actualLogisticsMinor={order.actualLogisticsMinor}
+              adjustmentMinor={order.logisticsAdjustmentMinor}
+              reconciliationStatus={reconciliationStatus}
+              shipment={order.shipment}
+            />
           </div>
           <div className="flex flex-col gap-6">
             <section className="rounded-card border border-border bg-surface p-4.5 shadow-sm sm:p-6.5">
@@ -85,7 +99,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             </section>
             <section className="rounded-card border border-primary/25 bg-primary-soft/50 p-4.5 shadow-sm sm:p-6.5">
               <h2 className="font-display text-sm font-semibold uppercase tracking-wide text-primary">Update status</h2>
-              <div className="mt-3"><OrderStatusUpdater orderId={order.id} currentStatus={order.status} /></div>
+              <div className="mt-3"><OrderStatusUpdater orderId={order.id} currentStatus={order.status} availableStatuses={availableOrderStatuses(order.status, logisticsSettled)} /></div>
             </section>
           </div>
         </div>

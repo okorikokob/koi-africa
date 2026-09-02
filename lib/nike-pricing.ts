@@ -3,6 +3,7 @@ import {
   majorToMinor,
   type DisplayRateSnapshot,
 } from "@/lib/display-currency";
+import { reconcileLogisticsDeposit } from "@/lib/admin-logistics";
 
 export const KOI_NIKE_MARGIN_BASIS_POINTS = 1_000;
 export const KOI_NIKE_LOGISTICS_DEPOSIT_MINOR = 3_000_000;
@@ -112,20 +113,5 @@ export function calculateNikeOrderPricing(
 }
 
 export function reconcileNikeLogistics(actualLogisticsMinor: number, depositMinor = KOI_NIKE_LOGISTICS_DEPOSIT_MINOR) {
-  if (!Number.isSafeInteger(actualLogisticsMinor) || actualLogisticsMinor < 0) {
-    throw new Error("Actual logistics must be a nonnegative integer in minor units.");
-  }
-  if (!Number.isSafeInteger(depositMinor) || depositMinor < 0) {
-    throw new Error("Logistics deposit must be a nonnegative integer in minor units.");
-  }
-  const adjustmentMinor = actualLogisticsMinor - depositMinor;
-  return {
-    actualLogisticsMinor,
-    adjustmentMinor,
-    status: adjustmentMinor === 0
-      ? "no_adjustment" as const
-      : adjustmentMinor < 0
-        ? "refund_due" as const
-        : "top_up_due" as const,
-  };
+  return reconcileLogisticsDeposit(actualLogisticsMinor, depositMinor);
 }

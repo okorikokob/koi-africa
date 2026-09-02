@@ -13,6 +13,8 @@ Update this file after every completed feature.
 
 **Admin security update (2026-09-01):** PostgreSQL password rotation now requires the current password, enforces a 10-character minimum, revokes prior sessions atomically, creates one replacement session, and writes a password-change audit event without sensitive values.
 
+**Admin logistics update (2026-09-02):** Order operations now enforce forward-only status transitions, capture one or more physical package measurements, reconcile the logistics deposit against a confirmed amount excluding Customs, and manually record refund/top-up settlement references with PostgreSQL audit history.
+
 ---
 
 ## Progress

@@ -38,6 +38,26 @@ Last updated: 2026-09-01
 
 **Pattern notes:** Sensitive admin forms use the established login-input treatment inside an admin surface card. Password values remain browser-only form inputs; status messages are semantic and never echo submitted values.
 
+### Admin logistics reconciliation panel
+
+File: components/admin/OrderLogisticsManager.tsx
+Last updated: 2026-09-02
+
+| Property | Class |
+| --- | --- |
+| Background | container `bg-surface`; package panels and inputs `bg-background` |
+| Border | container and packages `border border-border`; inputs `border-[1.5px] border-border` |
+| Border radius | container `rounded-card`; packages/inputs `rounded-[12px]`; notices `rounded-[10px]` |
+| Text — primary | headings/labels `font-sans font-bold text-text-primary` |
+| Text — secondary | operational guidance `text-text-secondary`; supporting rules `text-text-muted` |
+| Spacing | container `p-4.5 sm:p-6.5`; form `gap-4`; package grid `gap-3` |
+| Hover state | primary actions `hover:bg-primary-hover`; removal `hover:bg-error/10 hover:text-error` |
+| Focus state | inputs `focus:border-primary focus:ring-4 focus:ring-primary-soft` |
+| Shadow | container `shadow-sm` |
+| Accent usage | primary for measurement/reconciliation, success for confirmed settlement, warning for blocked prerequisites |
+
+**Pattern notes:** Multi-stage operational forms stay in one card and progressively reveal only the next legal action. Money is labelled as naira, package measurements display explicit base units, and Customs separation is repeated beside reconciliation controls.
+
 ### Product option selectors
 
 File: components/product/ProductInfo.tsx

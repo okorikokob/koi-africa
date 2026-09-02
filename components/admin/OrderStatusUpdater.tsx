@@ -3,14 +3,15 @@
 import { useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { updateOrderStatus } from "@/actions/orders";
-import { ORDER_STATUSES, ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/shipping";
+import { ORDER_STATUS_LABELS, type OrderStatus } from "@/lib/shipping";
 
 type Props = {
   orderId: string;
   currentStatus: OrderStatus;
+  availableStatuses: OrderStatus[];
 };
 
-export function OrderStatusUpdater({ orderId, currentStatus }: Props) {
+export function OrderStatusUpdater({ orderId, currentStatus, availableStatuses }: Props) {
   const [status, setStatus] = useState<OrderStatus>(currentStatus);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +40,7 @@ export function OrderStatusUpdater({ orderId, currentStatus }: Props) {
         }}
         className="w-full rounded-button border border-border bg-surface px-4 py-2.5 font-sans text-sm text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
       >
-        {ORDER_STATUSES.map((s) => (
+        {availableStatuses.map((s) => (
           <option key={s} value={s}>
             {ORDER_STATUS_LABELS[s]}
           </option>
