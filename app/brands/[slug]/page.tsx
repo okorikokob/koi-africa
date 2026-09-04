@@ -7,6 +7,7 @@ import { getLocalCatalogBrands } from "@/lib/local-catalog";
 import { getBrandCatalog } from "@/lib/catalog-db";
 import { BrandProductsSection } from "@/components/catalog/BrandProductsSection";
 import { toProductCardData } from "@/lib/catalog-helpers";
+import { isPubliclyShoppableBrand } from "@/lib/public-storefront-policy";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -16,7 +17,7 @@ export default async function BrandPage({ params }: Props) {
   const { slug } = await params;
   const brand = [...FEATURED_BRANDS, ...getLocalCatalogBrands()].find((b) => b.slug === slug);
 
-  if (!brand) notFound();
+  if (!brand || !isPubliclyShoppableBrand(brand.slug)) notFound();
 
   const products = await getBrandCatalog(brand.name, brand.category);
   const heroImage = products[0]?.imageUrl;

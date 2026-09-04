@@ -112,8 +112,8 @@ export function Hero() {
           variants={item}
           className="mb-7 max-w-[320px] text-[15px] leading-[1.7] text-white/55 md:mb-[34px] md:max-w-[480px] md:text-lg"
         >
-          Nike, Zara, Gucci, Sephora &amp; other premium global brands delivered to your
-          doorstep in Nigeria. No dollar card needed.
+          Shop our verified Nike catalogue today, with more premium global brands coming
+          soon. Pay in naira and deliver to Nigeria—no dollar card needed.
         </motion.p>
 
         <motion.div variants={item} className="mb-10 flex flex-wrap gap-3 md:mb-[52px] md:gap-4">

@@ -8,21 +8,19 @@ import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { Reveal } from "@/components/motion/Reveal";
 import { getFeaturedProducts, getBrandSummaries } from "@/lib/catalog-db";
 import { toProductCardData } from "@/lib/catalog-helpers";
-import { getEnabledHomepageDemoBrands, prioritizeHomepageBrands } from "@/lib/homepage-catalog";
+import { partitionMarketplaceBrands } from "@/lib/public-storefront-policy";
 
 export const dynamic = "force-dynamic";
-import { FEATURED_PRODUCTS, FEATURED_BRANDS } from "@/lib/mock-data";
+import { FEATURED_BRANDS } from "@/lib/mock-data";
 import Link from "next/link";
 
 export default async function HomePage() {
-  const homepageBrands = prioritizeHomepageBrands(FEATURED_BRANDS, getEnabledHomepageDemoBrands());
+  const marketplaceBrands = partitionMarketplaceBrands(FEATURED_BRANDS);
   const [dbFeatured, brandSummaries] = await Promise.all([
     getFeaturedProducts(8),
-    getBrandSummaries(homepageBrands),
+    getBrandSummaries(marketplaceBrands.available),
   ]);
-  const trendingProducts = (dbFeatured.length > 0 ? dbFeatured : FEATURED_PRODUCTS)
-    .slice(0, 4)
-    .map(toProductCardData);
+  const trendingProducts = dbFeatured.slice(0, 4).map(toProductCardData);
 
   return (
     <div className="flex flex-col">
@@ -30,7 +28,7 @@ export default async function HomePage() {
       <Marquee />
       <CategoryPills />
       <div className="mt-6 md:mt-10">
-        <FeaturedBrands summaries={brandSummaries} />
+        <FeaturedBrands summaries={brandSummaries} comingSoon={marketplaceBrands.comingSoon} />
       </div>
 
       <div className="mt-6 bg-surface-secondary px-5 py-10 md:mt-10 md:py-6">
@@ -51,7 +49,13 @@ export default async function HomePage() {
               View all
             </Link>
           </Reveal>
-          <ProductGrid products={trendingProducts} />
+          {trendingProducts.length > 0 ? (
+            <ProductGrid products={trendingProducts} />
+          ) : (
+            <div className="rounded-card border border-border bg-surface px-6 py-12 text-center font-sans text-sm text-text-muted">
+              Fresh Nike arrivals are being prepared. Please check back shortly.
+            </div>
+          )}
         </div>
       </div>
 

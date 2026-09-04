@@ -183,3 +183,22 @@ Entry template:
 - Title: font-sans text-sm text-text-primary line-clamp-2
 - Notes: whole card links to /products/[id]
 -->
+
+### Marketplace brand rail
+
+Files: `components/home/FeaturedBrands.tsx`, `components/catalog/AllBrandsGrid.tsx`
+Last updated: 2026-09-02
+
+| Property | Class |
+| --- | --- |
+| Background | active circle `bg-surface`; planned circle `bg-surface-secondary` |
+| Border | active `border-2 border-primary`; planned `border border-dashed border-border` |
+| Border radius | brand media `rounded-full`; directory cards `rounded-card` |
+| Text — primary | names `font-sans font-bold text-text-primary`; section heading `font-display font-black` |
+| Text — secondary | counts and availability `font-sans text-text-muted` |
+| Spacing | mobile rail `gap-5 px-5`; desktop distributes items across a `max-w-[1440px]` container; circle width `112px` mobile up to `156px` desktop |
+| Hover state | active only: `group-hover:-translate-y-1 group-hover:shadow-md`; planned brands have no interaction |
+| Shadow | active `shadow-sm`, hover `shadow-md`; planned none |
+| Accent usage | primary border and circular arrow badge identify verified, shoppable brands |
+
+**Pattern notes:** Use a horizontally scrollable circular rail for compact marketplace discovery. Verified brands are real links with catalogue imagery and exact product counts. Planned brands are visibly labelled “Coming soon,” use dashed neutral styling, and must never be links. Brands hidden by storefront policy must not render in either group.

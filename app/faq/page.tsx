@@ -37,7 +37,7 @@ const FAQS: FaqItem[] = [
     category: "order",
     question: "Which brands can I shop on KOI?",
     answer:
-      "Global fashion, beauty, and tech brands including Nike, Zara, Sephora, Gucci, Apple, Adidas and Fenty Beauty — with more added regularly.",
+      "Nike is the verified shopping brand available for the current pilot. More global brands will be added only after their catalogues and checkout paths are verified.",
   },
   {
     icon: "📏",

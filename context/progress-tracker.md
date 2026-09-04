@@ -17,6 +17,8 @@ Update this file after every completed feature.
 
 **Customer tracking recovery (2026-09-02):** `/track` and `POST /api/orders/track` now read the authoritative PostgreSQL commerce snapshots using normalized order reference + checkout email. The customer response includes exact selected variants, first-payment components, and customer-safe shipment milestones while excluding internal pricing, staff notes, provider payloads, and reconciliation references.
 
+**Marketplace storefront alignment (2026-09-02):** The homepage now uses a compact circular brand-discovery rail. Nike is the only verified public shopping brand for the pilot; H&M and Sephora are hidden from public discovery and direct storefront routes, while other planned brands are clearly non-clickable “Coming soon” entries.
+
 ---
 
 ## Progress

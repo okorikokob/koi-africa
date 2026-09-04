@@ -4,15 +4,15 @@ import { Reveal } from "@/components/motion/Reveal";
 const STEPS = [
   {
     icon: "🔍",
-    title: "Browse global brands",
+    title: "Browse verified products",
     description:
-      "Discover products from Nike, Zara, Gucci, Sephora and 500+ more brands — all in one premium place on KOI.",
+      "Start with KOI's verified Nike catalogue. More global brands will open only after their products and checkout paths are verified.",
   },
   {
     icon: "🛒",
     title: "Add to your KOI cart",
     description:
-      "Select your item, choose your size and colour, and add to your cart. Browse as many brands as you like.",
+      "Select your item, choose the exact size and colour, and add it to your cart.",
   },
   {
     icon: "💳",

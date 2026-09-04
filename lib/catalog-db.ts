@@ -4,12 +4,14 @@ import {
   getCatalogV2ProductById,
   getCatalogV2Products,
   getCatalogV2ProductsByBrand,
-  getCatalogV2FeaturedProducts,
 } from "@/lib/catalog-v2-db";
 import type { Brand, Product } from "@/types";
-import { getLocalCatalogProductById, getLocalCatalogProducts, getLocalCatalogProductsByBrand, getLocalHomepageProducts } from "@/lib/local-catalog";
-import { getEnabledHomepageDemoBrands, prioritizeHomepageProducts } from "@/lib/homepage-catalog";
+import { getLocalCatalogProductById, getLocalCatalogProducts, getLocalCatalogProductsByBrand } from "@/lib/local-catalog";
 import { nikePostgresReadsEnabled } from "@/lib/catalog-feature-flags";
+import {
+  filterPublicStorefrontProducts,
+  isPubliclyShoppableBrand,
+} from "@/lib/public-storefront-policy";
 
 export type ProductListResult = {
   products: Product[];
@@ -27,80 +29,37 @@ export async function getProducts({
   page = 1,
   pageSize = 24,
 }: ProductListOptions = {}): Promise<ProductListResult> {
-  const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalCatalogProducts();
-  const insforge = createInsforgeServer();
-  let query = insforge.database
-    .from("products")
-    .select("*")
-    .order("is_featured", { ascending: false })
-    .order("synced_at", { ascending: false });
-
-  if (categories.length > 0) {
-    query = query.in("category", categories);
-  }
-
-  const { data } = await query;
-  const legacyProducts = (data as ProductRow[] | null)?.map(rowToKoi) ?? [];
-  const merged = [...localNikeProducts, ...catalogProducts, ...legacyProducts];
-  const filtered = categories.length > 0 ? merged.filter((product) => categories.includes(product.category)) : merged;
+  const publicProducts = await getProductsByBrand("Nike");
+  const filtered = categories.length > 0 ? publicProducts.filter((product) => categories.includes(product.category)) : publicProducts;
   const from = (page - 1) * pageSize;
   return { products: filtered.slice(from, from + pageSize), total: filtered.length };
 }
 
 export async function searchProducts(searchTerm: string, limit = 40): Promise<Product[]> {
-  const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalCatalogProducts();
-  const insforge = createInsforgeServer();
-  const term = searchTerm.replace(/[(),.]/g, " ").replace(/[%_]/g, "\\$&");
-  const { data, error } = await insforge.database
-    .from("products")
-    .select("*")
-    .or(`title.ilike.%${term}%,brand_name.ilike.%${term}%`)
-    .limit(limit);
-  const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
   const normalizedTerm = searchTerm.toLowerCase();
-  const localAndV2 = [...localNikeProducts, ...catalogProducts].filter((product) => product.title.toLowerCase().includes(normalizedTerm) || product.brandName.toLowerCase().includes(normalizedTerm));
-  return [...localAndV2, ...legacy].slice(0, limit);
+  return (await getProductsByBrand("Nike"))
+    .filter((product) => (
+      product.title.toLowerCase().includes(normalizedTerm)
+      || product.brandName.toLowerCase().includes(normalizedTerm)
+    ))
+    .slice(0, limit);
 }
 
 export async function getCategoryFacets(): Promise<string[]> {
-  const catalogProducts = await getCatalogV2Products();
-  const localNikeProducts = getLocalCatalogProducts();
-  const insforge = createInsforgeServer();
-  const { data, error } = await insforge.database
-    .from("products")
-    .select("category");
-  const set = new Set([...localNikeProducts, ...catalogProducts].map((product) => product.category));
-  if (!error && data) for (const category of
-    (data as Array<{ category: string | null }>)
-      .map((row) => row.category)
-      .filter((category): category is string => Boolean(category))) set.add(category);
+  const publicProducts = await getProductsByBrand("Nike");
+  const set = new Set(publicProducts.map((product) => product.category));
   return Array.from(set).sort();
 }
 
 export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
-  const catalogProducts = await getCatalogV2FeaturedProducts(limit);
-  const localHomepageProducts = getLocalHomepageProducts();
-  const insforge = createInsforgeServer();
-  const { data, error } = await insforge.database
-    .from("products")
-    .select("*")
-    .eq("is_featured", true)
-    .limit(limit);
-  const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
-  return prioritizeHomepageProducts(
-    [...localHomepageProducts, ...catalogProducts, ...legacy],
-    getEnabledHomepageDemoBrands(),
-    limit,
-  );
+  return (await getProductsByBrand("Nike")).slice(0, limit);
 }
 
 export async function getProductById(id: string): Promise<Product | null> {
   const localProduct = getLocalCatalogProductById(id);
-  if (localProduct) return localProduct;
+  if (localProduct && isPubliclyShoppableBrand(localProduct.brandName)) return localProduct;
   const catalogProduct = await getCatalogV2ProductById(id);
-  if (catalogProduct) return catalogProduct;
+  if (catalogProduct && isPubliclyShoppableBrand(catalogProduct.brandName)) return catalogProduct;
 
   const insforge = createInsforgeServer();
   const { data, error } = await insforge.database
@@ -109,19 +68,20 @@ export async function getProductById(id: string): Promise<Product | null> {
     .eq("id", id)
     .maybeSingle();
   if (error || !data) return null;
-  return rowToKoi(data as ProductRow);
+  const product = rowToKoi(data as ProductRow);
+  return isPubliclyShoppableBrand(product.brandName) ? product : null;
 }
 
 export async function getCatalogProductById(id: string): Promise<Product | null> {
   if (nikePostgresReadsEnabled()) {
     const { getNikePostgresProductById } = await import("@/lib/nike-postgres-catalog");
     const postgresNikeProduct = await getNikePostgresProductById(id);
-    if (postgresNikeProduct) return postgresNikeProduct;
+    if (postgresNikeProduct && isPubliclyShoppableBrand(postgresNikeProduct.brandName)) return postgresNikeProduct;
   }
   const localProduct = getLocalCatalogProductById(id);
-  if (localProduct) return localProduct;
+  if (localProduct && isPubliclyShoppableBrand(localProduct.brandName)) return localProduct;
   const catalogProduct = await getCatalogV2ProductById(id);
-  if (catalogProduct) return catalogProduct;
+  if (catalogProduct && isPubliclyShoppableBrand(catalogProduct.brandName)) return catalogProduct;
   return getProductById(id);
 }
 
@@ -132,7 +92,7 @@ export async function getRelatedProducts(
 ): Promise<Product[]> {
   const localNikeProducts = getLocalCatalogProducts();
   if (excludeId.startsWith("local-")) {
-    return localNikeProducts
+    return filterPublicStorefrontProducts(localNikeProducts)
       .filter((product) => product.category === category && product.id !== excludeId)
       .slice(0, limit);
   }
@@ -145,9 +105,8 @@ export async function getRelatedProducts(
     .neq("id", excludeId)
     .limit(limit);
   const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
-  return [...localNikeProducts, ...catalogProducts]
+  return filterPublicStorefrontProducts([...localNikeProducts, ...catalogProducts, ...legacy])
     .filter((product) => product.category === category && product.id !== excludeId)
-    .concat(legacy)
     .slice(0, limit);
 }
 
@@ -170,6 +129,7 @@ export async function getRelatedProductsForTitle(
 }
 
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
+  if (!isPubliclyShoppableBrand(brandName)) return [];
   if (brandName.toLowerCase() === "nike" && nikePostgresReadsEnabled()) {
     const { getNikePostgresProducts } = await import("@/lib/nike-postgres-catalog");
     return getNikePostgresProducts();
@@ -185,7 +145,7 @@ export async function getProductsByBrand(brandName: string): Promise<Product[]> 
     .select("*")
     .ilike("brand_name", brandName);
   const legacy = error || !data ? [] : (data as ProductRow[]).map(rowToKoi);
-  return [...localProducts, ...catalogProducts, ...legacy];
+  return filterPublicStorefrontProducts([...localProducts, ...catalogProducts, ...legacy]);
 }
 
 export async function getBrandCatalog(brandName: string, _category: string): Promise<Product[]> {

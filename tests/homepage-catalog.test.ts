@@ -1,53 +1,66 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  getEnabledHomepageDemoBrands,
-  prioritizeHomepageBrands,
-  prioritizeHomepageProducts,
-} from "../lib/homepage-catalog";
+  filterPublicStorefrontProducts,
+  isHiddenPublicBrand,
+  isPubliclyShoppableBrand,
+  partitionMarketplaceBrands,
+} from "../lib/public-storefront-policy";
 import type { Brand, Product } from "../types";
 
 function brand(name: string, slug: string): Brand {
   return { id: slug, name, slug, logoUrl: "", description: "", category: "test", isFeatured: true };
 }
 
-function product(id: string, vendorName: string): Product {
+function product(id: string, brandName: string): Product {
   return {
     id,
     title: id,
-    brandName: vendorName,
+    brandName,
     category: "test",
     imageUrl: "https://example.com/image.jpg",
     priceAmount: 1,
     priceCurrency: "USD",
-    vendorName,
+    vendorName: brandName,
     vendorUrl: "https://example.com",
     isFeatured: true,
   };
 }
 
-test("enabled demo flags collapse into Nike, H&M, Sephora order without gaps", () => {
-  assert.deepEqual(
-    getEnabledHomepageDemoBrands({
-      USE_LOCAL_NIKE_CATALOG: "true",
-      USE_LOCAL_SEPHORA_CATALOG: "true",
-    }),
-    ["nike", "sephora"],
-  );
+test("Nike is the only publicly shoppable pilot brand", () => {
+  assert.equal(isPubliclyShoppableBrand("Nike"), true);
+  assert.equal(isPubliclyShoppableBrand("nike"), true);
+  assert.equal(isPubliclyShoppableBrand("H&M"), false);
+  assert.equal(isPubliclyShoppableBrand("Sephora"), false);
+  assert.equal(isPubliclyShoppableBrand("Zara"), false);
 });
 
-test("homepage brand cards prioritize enabled demos and preserve remaining order", () => {
-  const brands = [brand("Zara", "zara"), brand("Sephora", "sephora"), brand("Nike", "nike"), brand("H&M", "hm"), brand("Apple", "apple")];
-  assert.deepEqual(
-    prioritizeHomepageBrands(brands, ["nike", "hm", "sephora"]).map((item) => item.slug),
-    ["nike", "hm", "sephora", "zara", "apple"],
-  );
+test("H&M and Sephora identities are hidden from the public marketplace", () => {
+  for (const identity of ["H&M", "hm", "h-m", "h-and-m", "Sephora", "sephora"]) {
+    assert.equal(isHiddenPublicBrand(identity), true, `${identity} should be hidden`);
+  }
 });
 
-test("homepage products use one product per enabled demo before existing products", () => {
-  const products = [product("zara-1", "Zara"), product("sephora-1", "Sephora"), product("nike-1", "Nike"), product("nike-2", "Nike"), product("hm-1", "H&M")];
-  assert.deepEqual(
-    prioritizeHomepageProducts(products, ["nike", "hm", "sephora"], 5).map((item) => item.id),
-    ["nike-1", "hm-1", "sephora-1", "zara-1", "nike-2"],
-  );
+test("marketplace partition keeps Nike first and excludes misleading brands", () => {
+  const result = partitionMarketplaceBrands([
+    brand("Zara", "zara"),
+    brand("Sephora", "sephora"),
+    brand("Nike", "nike"),
+    brand("H&M", "hm"),
+    brand("Apple", "apple"),
+  ]);
+
+  assert.deepEqual(result.available.map((item) => item.slug), ["nike"]);
+  assert.deepEqual(result.comingSoon.map((item) => item.slug), ["zara", "apple"]);
+});
+
+test("public product filtering cannot expose unverified brand products", () => {
+  const products = [
+    product("sephora-1", "Sephora"),
+    product("nike-1", "Nike"),
+    product("hm-1", "H&M"),
+    product("nike-2", "nike"),
+  ];
+
+  assert.deepEqual(filterPublicStorefrontProducts(products).map((item) => item.id), ["nike-1", "nike-2"]);
 });

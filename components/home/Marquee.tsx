@@ -1,22 +1,15 @@
-const BRANDS = [
+const MARKETPLACE_HIGHLIGHTS = [
   "Nike",
-  "Zara",
-  "Gucci",
-  "Sephora",
-  "Apple",
-  "Adidas",
-  "Louis Vuitton",
-  "Fenty Beauty",
-  "Dyson",
-  "Charlotte Tilbury",
-  "New Balance",
-  "H&M",
-  "Hermès",
-  "Levi's",
+  "Verified catalogue",
+  "Exact variants",
+  "Pay in naira",
+  "Secure checkout",
+  "Delivery to Nigeria",
+  "More brands coming soon",
 ];
 
 export function Marquee() {
-  const track = [...BRANDS, ...BRANDS];
+  const track = [...MARKETPLACE_HIGHLIGHTS, ...MARKETPLACE_HIGHLIGHTS];
 
   return (
     <div className="overflow-hidden bg-primary py-3.5 md:py-[18px]">

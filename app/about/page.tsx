@@ -39,12 +39,12 @@ const VALUES = [
 
 const STEPS = [
   {
-    title: "Browse global brands",
-    description: "Discover products from Nike, Zara, Gucci, Sephora and 500+ more — all in one premium place.",
+    title: "Browse verified products",
+    description: "Start with KOI's verified Nike catalogue. More global brands are coming after verification.",
   },
   {
     title: "Add to your KOI cart",
-    description: "Choose your size and colour, and add to your cart. Mix brands freely.",
+    description: "Choose the exact size and colour, and add the product to your cart.",
   },
   {
     title: "Pay securely in naira",
@@ -64,13 +64,13 @@ export default function AboutPage() {
         eyebrow="🌍 About KOI"
         title="Global brands. Naira prices. Nigerian doorsteps."
         highlight="Nigerian doorsteps."
-        subtitle="KOI is Chowdeck for global shopping — we bring Nike, Zara, Sephora, Gucci and hundreds of other international brands to Nigeria, without the forex cards or WhatsApp middlemen."
+        subtitle="KOI is a premium cross-border marketplace, starting with a verified Nike catalogue and expanding brand by brand—without forex cards or WhatsApp middlemen."
       />
 
       <div className="px-5 py-10 md:px-16 md:py-16">
         <StatBar
           stats={[
-            { n: "500+", l: "Global Brands" },
+            { n: "100%", l: "Verified Pilot Catalogue" },
             { n: "7–14d", l: "Delivery Time" },
             { n: "₦0", l: "Dollar Card Needed" },
             { n: "2026", l: "Founded in Abuja" },

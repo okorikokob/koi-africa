@@ -4,26 +4,13 @@ import { ArrowLeft } from "lucide-react";
 import { AllBrandsGrid } from "@/components/catalog/AllBrandsGrid";
 import { getBrandSummaries, type BrandSummary } from "@/lib/catalog-db";
 import { FEATURED_BRANDS } from "@/lib/mock-data";
-import { getLocalCatalogBrands, getLocalCatalogProductsByBrand } from "@/lib/local-catalog";
+import { partitionMarketplaceBrands } from "@/lib/public-storefront-policy";
 
 export const dynamic = "force-dynamic";
 
-function localFallbackSummaries(brands: typeof FEATURED_BRANDS): BrandSummary[] {
-  return brands.map((brand) => {
-    const products = getLocalCatalogProductsByBrand(brand.name);
-    return { brand, productCount: products.length, imageUrl: products[0]?.imageUrl ?? null };
-  });
-}
-
 export default async function BrandsPage() {
-  const brands = [...FEATURED_BRANDS, ...getLocalCatalogBrands()];
-  const localDemoEnabled = process.env.USE_LOCAL_NIKE_CATALOG === "true" || process.env.USE_LOCAL_HM_CATALOG === "true" || process.env.USE_LOCAL_SEPHORA_CATALOG === "true" || process.env.USE_LOCAL_PUMA_CATALOG === "true";
-  const summaries = localDemoEnabled
-    ? await Promise.race([
-        getBrandSummaries(brands),
-        new Promise<BrandSummary[]>((resolve) => setTimeout(() => resolve(localFallbackSummaries(brands)), 3_000)),
-      ])
-    : await getBrandSummaries(brands);
+  const marketplaceBrands = partitionMarketplaceBrands(FEATURED_BRANDS);
+  const summaries: BrandSummary[] = await getBrandSummaries(marketplaceBrands.available);
   const heroImage = summaries.find((s) => s.imageUrl)?.imageUrl;
 
   return (
@@ -54,12 +41,12 @@ export default async function BrandsPage() {
             All Brands
           </h1>
           <p className="font-sans text-sm font-medium text-white/50 md:text-base">
-            500+ global brands, all delivering to Nigeria
+            Verified global shopping, starting with Nike
           </p>
         </div>
       </div>
 
-      <AllBrandsGrid summaries={summaries} />
+      <AllBrandsGrid summaries={summaries} comingSoon={marketplaceBrands.comingSoon} />
     </div>
   );
 }
