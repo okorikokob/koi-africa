@@ -1,4 +1,4 @@
-import { and, eq, notInArray } from "drizzle-orm";
+import { and, eq, notInArray, sql } from "drizzle-orm";
 import type { db } from "@/database/client";
 import {
   brands,
@@ -165,8 +165,7 @@ export class NikeCatalogIngestionRepository {
       let sourceProductId = normalized.sourceProductId;
       if (canonicalMatch && canonicalMatch.sourceProductId !== sourceProductId) {
         const sameStyle = Boolean(product.style_code && canonicalMatch.styleCode === product.style_code);
-        if (!sameStyle) throw new Error("Canonical URL belongs to a different established product identity.");
-        sourceProductId = canonicalMatch.sourceProductId;
+        if (sameStyle) sourceProductId = canonicalMatch.sourceProductId;
       }
 
       const now = new Date();
@@ -294,43 +293,41 @@ export class NikeCatalogIngestionRepository {
 
       const uniqueImages = [...new Map(normalized.images.map((image) => [image.official_cdn_url, image])).values()];
       if (uniqueImages.length > 0) {
-        for (const image of uniqueImages) {
-          const imageSourceUpdatedAt = sourceDate(image.source_updated_at);
-          await tx.insert(productImages).values({
+        await tx.insert(productImages).values(uniqueImages.map((image) => ({
             productId: savedProduct.id,
             colourwayId: image.style_color ? colourwayIds.get(image.style_color) : null,
             sourceUrl: image.official_cdn_url,
             altText: image.alt_text,
             position: image.position,
             colorName: image.color_name,
-            sourceUpdatedAt: imageSourceUpdatedAt,
-          }).onConflictDoUpdate({
-            target: [productImages.productId, productImages.sourceUrl],
-            set: {
-              altText: image.alt_text,
-              position: image.position,
-              colorName: image.color_name,
-              colourwayId: image.style_color ? colourwayIds.get(image.style_color) : null,
-              ...(imageSourceUpdatedAt ? { sourceUpdatedAt: imageSourceUpdatedAt } : {}),
-              updatedAt: now,
-            },
-          });
-        }
+            isActive: true,
+            sourceUpdatedAt: sourceDate(image.source_updated_at),
+          }))).onConflictDoUpdate({
+          target: [productImages.productId, productImages.sourceUrl],
+          set: {
+            altText: sql`excluded.alt_text`,
+            position: sql`excluded.position`,
+            colorName: sql`excluded.color_name`,
+            isActive: true,
+            colourwayId: sql`excluded.colourway_id`,
+            sourceUpdatedAt: sql`coalesce(excluded.source_updated_at, ${productImages.sourceUpdatedAt})`,
+            updatedAt: now,
+          },
+        });
       }
       if (uniqueImages.length > 0) {
-        await tx.delete(productImages).where(and(
+        await tx.update(productImages).set({ isActive: false, updatedAt: now }).where(and(
           eq(productImages.productId, savedProduct.id),
           notInArray(productImages.sourceUrl, uniqueImages.map((image) => image.official_cdn_url)),
         ));
       } else {
-        await tx.delete(productImages).where(eq(productImages.productId, savedProduct.id));
+        await tx.update(productImages).set({ isActive: false, updatedAt: now })
+          .where(eq(productImages.productId, savedProduct.id));
       }
 
       const uniqueVariants = [...new Map(normalized.variants.map((variant) => [variant.source_variant_id, variant])).values()];
       if (uniqueVariants.length > 0) {
-        for (const variant of uniqueVariants) {
-          const variantSourceUpdatedAt = sourceDate(variant.source_updated_at);
-          await tx.insert(productVariants).values({
+        await tx.insert(productVariants).values(uniqueVariants.map((variant) => ({
             productId: savedProduct.id,
             colourwayId: variant.style_color ? colourwayIds.get(variant.style_color) : null,
             provider: "apify",
@@ -345,28 +342,27 @@ export class NikeCatalogIngestionRepository {
             available: variant.available,
             availabilityStatus: variant.availability_status,
             isActive: true,
-            sourceUpdatedAt: variantSourceUpdatedAt,
+            sourceUpdatedAt: sourceDate(variant.source_updated_at),
             lastSeenAt: now,
-          }).onConflictDoUpdate({
-            target: [productVariants.productId, productVariants.sourceVariantId],
-            set: {
-              sku: variant.sku,
-              gtin: variant.gtin,
-              title: variant.title,
-              optionValues: variant.option_values,
-              colourwayId: variant.style_color ? colourwayIds.get(variant.style_color) : null,
-              currency: variant.currency,
-              priceMinor: variant.price_minor,
-              compareAtPriceMinor: variant.sale_price_minor,
-              available: variant.available,
-              availabilityStatus: variant.availability_status,
-              isActive: true,
-              ...(variantSourceUpdatedAt ? { sourceUpdatedAt: variantSourceUpdatedAt } : {}),
-              lastSeenAt: now,
-              updatedAt: now,
-            },
-          });
-        }
+          }))).onConflictDoUpdate({
+          target: [productVariants.productId, productVariants.sourceVariantId],
+          set: {
+            sku: sql`excluded.sku`,
+            gtin: sql`excluded.gtin`,
+            title: sql`excluded.title`,
+            optionValues: sql`excluded.option_values`,
+            colourwayId: sql`excluded.colourway_id`,
+            currency: sql`excluded.currency`,
+            priceMinor: sql`excluded.price_minor`,
+            compareAtPriceMinor: sql`excluded.compare_at_price_minor`,
+            available: sql`excluded.available`,
+            availabilityStatus: sql`excluded.availability_status`,
+            isActive: true,
+            sourceUpdatedAt: sql`coalesce(excluded.source_updated_at, ${productVariants.sourceUpdatedAt})`,
+            lastSeenAt: now,
+            updatedAt: now,
+          },
+        });
 
         await tx.update(productVariants).set({ isActive: false, updatedAt: now }).where(and(
           eq(productVariants.productId, savedProduct.id),

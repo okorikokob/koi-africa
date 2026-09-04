@@ -57,11 +57,11 @@ function row(): NikeCatalogReadRow {
     images: [
       {
         id: "image-2", productId: "product-uuid", colourwayId: null, sourceUrl: "https://static.nike.com/second.jpg",
-        altText: null, position: 1, colorName: "Red", sourceUpdatedAt: now, createdAt: now, updatedAt: now,
+        altText: null, position: 1, colorName: "Red", isActive: true, sourceUpdatedAt: now, createdAt: now, updatedAt: now,
       },
       {
         id: "image-1", productId: "product-uuid", colourwayId: null, sourceUrl: "https://static.nike.com/first.jpg",
-        altText: null, position: 0, colorName: "Red", sourceUpdatedAt: now, createdAt: now, updatedAt: now,
+        altText: null, position: 0, colorName: "Red", isActive: true, sourceUpdatedAt: now, createdAt: now, updatedAt: now,
       },
     ],
     variants: [

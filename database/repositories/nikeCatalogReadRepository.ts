@@ -63,7 +63,7 @@ export class NikeCatalogReadRepository {
         .where(and(inArray(productColourways.productId, productIds), eq(productColourways.isActive, true)))
         .orderBy(asc(productColourways.position), asc(productColourways.id)),
       this.database.select().from(productImages)
-        .where(inArray(productImages.productId, productIds))
+        .where(and(inArray(productImages.productId, productIds), eq(productImages.isActive, true)))
         .orderBy(asc(productImages.position), asc(productImages.id)),
       this.database.select().from(productVariants)
         .where(and(inArray(productVariants.productId, productIds), eq(productVariants.isActive, true)))

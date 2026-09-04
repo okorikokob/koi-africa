@@ -1,0 +1,2 @@
+ALTER TABLE "product_images" ADD COLUMN "is_active" boolean DEFAULT true NOT NULL;--> statement-breakpoint
+CREATE INDEX "product_images_product_active_position_idx" ON "product_images" USING btree ("product_id","is_active","position");

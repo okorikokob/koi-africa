@@ -128,7 +128,7 @@ export const products = pgTable("products", {
     table.storefrontId,
     table.sourceProductId,
   ),
-  uniqueIndex("products_storefront_canonical_url_uidx").on(table.storefrontId, table.canonicalUrl),
+  index("products_storefront_canonical_url_idx").on(table.storefrontId, table.canonicalUrl),
   index("products_storefront_active_idx").on(table.storefrontId, table.isActive, table.available),
   index("products_last_seen_sync_run_idx").on(table.lastSeenSyncRunId),
   index("products_missing_since_sync_run_idx").on(table.missingSinceSyncRunId),
@@ -238,12 +238,14 @@ export const productImages = pgTable("product_images", {
   altText: text("alt_text"),
   position: integer("position").notNull().default(0),
   colorName: text("color_name"),
+  isActive: boolean("is_active").notNull().default(true),
   sourceUpdatedAt: timestamp("source_updated_at", { withTimezone: true }),
   ...timestamps(),
 }, (table) => [
   uniqueIndex("product_images_product_url_uidx").on(table.productId, table.sourceUrl),
   index("product_images_product_position_idx").on(table.productId, table.position),
   index("product_images_colourway_position_idx").on(table.colourwayId, table.position),
+  index("product_images_product_active_position_idx").on(table.productId, table.isActive, table.position),
   check("product_images_position_nonnegative", sql`${table.position} >= 0`),
 ]);
 
