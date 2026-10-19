@@ -74,9 +74,13 @@ export async function getProductById(id: string): Promise<Product | null> {
 
 export async function getCatalogProductById(id: string): Promise<Product | null> {
   if (nikePostgresReadsEnabled()) {
-    const { getNikePostgresProductById } = await import("@/lib/nike-postgres-catalog");
-    const postgresNikeProduct = await getNikePostgresProductById(id);
-    if (postgresNikeProduct && isPubliclyShoppableBrand(postgresNikeProduct.brandName)) return postgresNikeProduct;
+    try {
+      const { getNikePostgresProductById } = await import("@/lib/nike-postgres-catalog");
+      const postgresNikeProduct = await getNikePostgresProductById(id);
+      if (postgresNikeProduct && isPubliclyShoppableBrand(postgresNikeProduct.brandName)) return postgresNikeProduct;
+    } catch (error) {
+      console.error("[catalog] PostgreSQL Nike product read failed; using the saved catalogue.", error);
+    }
   }
   const localProduct = getLocalCatalogProductById(id);
   if (localProduct && isPubliclyShoppableBrand(localProduct.brandName)) return localProduct;
@@ -117,12 +121,16 @@ export async function getRelatedProductsForTitle(
   limit = 4,
 ): Promise<Product[]> {
   if (nikePostgresReadsEnabled()) {
-    const { getNikePostgresProductById, getNikePostgresProducts } = await import("@/lib/nike-postgres-catalog");
-    const postgresNikeProduct = await getNikePostgresProductById(excludeId);
-    if (postgresNikeProduct) {
-      return (await getNikePostgresProducts())
-        .filter((product) => product.category === category && product.id !== excludeId)
-        .slice(0, limit);
+    try {
+      const { getNikePostgresProductById, getNikePostgresProducts } = await import("@/lib/nike-postgres-catalog");
+      const postgresNikeProduct = await getNikePostgresProductById(excludeId);
+      if (postgresNikeProduct) {
+        return (await getNikePostgresProducts())
+          .filter((product) => product.category === category && product.id !== excludeId)
+          .slice(0, limit);
+      }
+    } catch (error) {
+      console.error("[catalog] PostgreSQL related-product read failed; using the saved catalogue.", error);
     }
   }
   return getRelatedProducts(category, excludeId, limit);
@@ -131,8 +139,12 @@ export async function getRelatedProductsForTitle(
 export async function getProductsByBrand(brandName: string): Promise<Product[]> {
   if (!isPubliclyShoppableBrand(brandName)) return [];
   if (brandName.toLowerCase() === "nike" && nikePostgresReadsEnabled()) {
-    const { getNikePostgresProducts } = await import("@/lib/nike-postgres-catalog");
-    return getNikePostgresProducts();
+    try {
+      const { getNikePostgresProducts } = await import("@/lib/nike-postgres-catalog");
+      return await getNikePostgresProducts();
+    } catch (error) {
+      console.error("[catalog] PostgreSQL Nike catalogue read failed; using the saved catalogue.", error);
+    }
   }
   const localProducts = getLocalCatalogProductsByBrand(brandName);
   if (["nike", "h&m", "sephora", "puma"].includes(brandName.toLowerCase()) && localProducts.length > 0) return localProducts;
